@@ -20,14 +20,17 @@ connectDB();
 // Middleware
 app.use(express.json());
 
-// Root route for testing
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
+
+
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes); // Mount ticket routes under /api/tickets
+
+// Root route for testing
+app.get("/", (req, res) => {
+  res.send("Server is running!");
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
