@@ -40,7 +40,7 @@ const Signup = () => {
     setLoading(true);
     setError('');
     setSuccess('');
-
+  
     // Check if all password rules are satisfied
     const isPasswordValid = passwordValidation.every((rule) => rule.isValid);
     if (!isPasswordValid) {
@@ -48,7 +48,7 @@ const Signup = () => {
       setLoading(false);
       return;
     }
-
+  
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, { username, password, role });
       setSuccess('User registered successfully! Redirecting to login...');
@@ -56,12 +56,17 @@ const Signup = () => {
         navigate('/login');
       }, 2000); // Redirect after 2 seconds
     } catch (error) {
-      setError(error.response?.data?.message || 'Error during registration. Please try again.');
+      if (error.response && error.response.status === 409) {
+        setError('User already exists.');
+      } else {
+        setError(error.response?.data?.message || 'Error during registration. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-white-500 to-indigo-600">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
