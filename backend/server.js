@@ -12,7 +12,29 @@ dotenv.config();
 const app = express();
 
 // Enable CORS
-app.use(cors());
+const corsOptions = {
+  origin: "https://role-based-ticketing-system-bice.vercel.app", // Allow your frontend
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Allow cookies if needed
+};
+
+app.use(cors(corsOptions));
+
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://role-based-ticketing-system-bice.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
+
 
 // Connect to MongoDB
 connectDB();
