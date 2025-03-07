@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const ticketRoutes = require('./routes/ticketRoutes');
+const connectDB = require('../config/db');
+const authRoutes = require('../routes/authRoutes');
+const ticketRoutes = require('../routes/ticketRoutes');
 const dotenv = require('dotenv');
 
 // Load environment variables
