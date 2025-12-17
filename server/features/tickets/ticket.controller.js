@@ -31,9 +31,16 @@ export class TicketController {
   static async createTicket(req, res) {
     const ticket = await TicketService.createTicket(req.body, req.user);
     
-    // Emit socket events for real-time updates
-    req.io.emitToRole('admin', 'ticket:created', { ticket });
-    req.io.emitToRole('manager', 'ticket:created', { ticket });
+    // Emit socket events for real-time updates (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        req.io.emitToRole('admin', 'ticket:created', { ticket });
+        req.io.emitToRole('manager', 'ticket:created', { ticket });
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+      // Don't fail the request if socket fails
+    }
     
     res.status(201).json({
       success: true,
@@ -46,23 +53,30 @@ export class TicketController {
     const oldTicket = await TicketService.getTicketById(req.params.id, req.user);
     const ticket = await TicketService.updateTicket(req.params.id, req.body, req.user);
     
-    // Emit socket events for real-time updates
-    const eventData = { ticket, oldTicket, updatedBy: req.user };
-    
-    // Notify relevant users
-    req.io.emitToRole('admin', 'ticket:updated', eventData);
-    req.io.emitToRole('manager', 'ticket:updated', eventData);
-    
-    if (ticket.assignedTo) {
-      req.io.emitToUser(ticket.assignedTo._id, 'ticket:updated', eventData);
+    // Emit socket events for real-time updates (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        const eventData = { ticket, oldTicket, updatedBy: req.user };
+        
+        // Notify relevant users
+        req.io.emitToRole('admin', 'ticket:updated', eventData);
+        req.io.emitToRole('manager', 'ticket:updated', eventData);
+        
+        if (ticket.assignedTo) {
+          req.io.emitToUser(ticket.assignedTo._id, 'ticket:updated', eventData);
+        }
+        
+        if (ticket.createdBy._id.toString() !== req.user._id.toString()) {
+          req.io.emitToUser(ticket.createdBy._id, 'ticket:updated', eventData);
+        }
+        
+        // Emit to ticket room for real-time collaboration
+        req.io.emitToTicket(ticket._id, 'ticket:updated', eventData);
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+      // Don't fail the request if socket fails
     }
-    
-    if (ticket.createdBy._id.toString() !== req.user._id.toString()) {
-      req.io.emitToUser(ticket.createdBy._id, 'ticket:updated', eventData);
-    }
-    
-    // Emit to ticket room for real-time collaboration
-    req.io.emitToTicket(ticket._id, 'ticket:updated', eventData);
     
     res.json({
       success: true,
@@ -74,9 +88,15 @@ export class TicketController {
   static async deleteTicket(req, res) {
     const result = await TicketService.deleteTicket(req.params.id, req.user);
     
-    // Emit socket events
-    req.io.emitToRole('admin', 'ticket:deleted', { ticketId: req.params.id });
-    req.io.emitToRole('manager', 'ticket:deleted', { ticketId: req.params.id });
+    // Emit socket events (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        req.io.emitToRole('admin', 'ticket:deleted', { ticketId: req.params.id });
+        req.io.emitToRole('manager', 'ticket:deleted', { ticketId: req.params.id });
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+    }
     
     res.json({
       success: true,
@@ -88,13 +108,19 @@ export class TicketController {
     const { assignedTo } = req.body;
     const ticket = await TicketService.assignTicket(req.params.id, assignedTo, req.user);
     
-    // Emit socket events
-    const eventData = { ticket, assignedBy: req.user };
-    
-    req.io.emitToRole('admin', 'ticket:assigned', eventData);
-    req.io.emitToRole('manager', 'ticket:assigned', eventData);
-    req.io.emitToUser(assignedTo, 'ticket:assigned', eventData);
-    req.io.emitToUser(ticket.createdBy._id, 'ticket:assigned', eventData);
+    // Emit socket events (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        const eventData = { ticket, assignedBy: req.user };
+        
+        req.io.emitToRole('admin', 'ticket:assigned', eventData);
+        req.io.emitToRole('manager', 'ticket:assigned', eventData);
+        req.io.emitToUser(assignedTo, 'ticket:assigned', eventData);
+        req.io.emitToUser(ticket.createdBy._id, 'ticket:assigned', eventData);
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+    }
     
     res.json({
       success: true,
@@ -108,13 +134,19 @@ export class TicketController {
   static async acceptTicket(req, res) {
     const ticket = await TicketService.acceptTicket(req.params.id, req.user);
     
-    // Emit socket events
-    const eventData = { ticket, acceptedBy: req.user };
-    
-    req.io.emitToRole('admin', 'ticket:accepted', eventData);
-    req.io.emitToRole('manager', 'ticket:accepted', eventData);
-    req.io.emitToUser(ticket.createdBy._id, 'ticket:accepted', eventData);
-    req.io.emitToUser(ticket.assignedBy?._id, 'ticket:accepted', eventData);
+    // Emit socket events (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        const eventData = { ticket, acceptedBy: req.user };
+        
+        req.io.emitToRole('admin', 'ticket:accepted', eventData);
+        req.io.emitToRole('manager', 'ticket:accepted', eventData);
+        req.io.emitToUser(ticket.createdBy._id, 'ticket:accepted', eventData);
+        req.io.emitToUser(ticket.assignedBy?._id, 'ticket:accepted', eventData);
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+    }
     
     res.json({
       success: true,
@@ -135,13 +167,19 @@ export class TicketController {
     
     const ticket = await TicketService.rejectTicket(req.params.id, reason, req.user);
     
-    // Emit socket events
-    const eventData = { ticket, rejectedBy: req.user, reason };
-    
-    req.io.emitToRole('admin', 'ticket:rejected', eventData);
-    req.io.emitToRole('manager', 'ticket:rejected', eventData);
-    req.io.emitToUser(ticket.createdBy._id, 'ticket:rejected', eventData);
-    req.io.emitToUser(ticket.assignedBy?._id, 'ticket:rejected', eventData);
+    // Emit socket events (with error handling)
+    try {
+      if (req.io && req.io.emitToRole) {
+        const eventData = { ticket, rejectedBy: req.user, reason };
+        
+        req.io.emitToRole('admin', 'ticket:rejected', eventData);
+        req.io.emitToRole('manager', 'ticket:rejected', eventData);
+        req.io.emitToUser(ticket.createdBy._id, 'ticket:rejected', eventData);
+        req.io.emitToUser(ticket.assignedBy?._id, 'ticket:rejected', eventData);
+      }
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+    }
     
     res.json({
       success: true,

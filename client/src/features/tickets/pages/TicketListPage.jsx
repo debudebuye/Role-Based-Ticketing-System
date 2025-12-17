@@ -50,7 +50,7 @@ const TicketListPage = () => {
         </div>
         {user?.role === ROLES.CUSTOMER && (
           <Link
-            to="/tickets/new"
+            to="new"
             className="btn btn-primary flex items-center"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -114,7 +114,7 @@ const TicketListPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <Link 
-                        to={`/tickets/${ticket._id}`}
+                        to={ticket._id}
                         className="text-lg font-medium text-gray-900 hover:text-primary-600"
                       >
                         {ticket.title}
@@ -138,7 +138,7 @@ const TicketListPage = () => {
                       </div>
                     </div>
                     <Link
-                      to={`/tickets/${ticket._id}`}
+                      to={ticket._id}
                       className="btn btn-secondary text-sm px-3 py-1 ml-4"
                     >
                       View
@@ -183,7 +183,7 @@ const TicketListPage = () => {
               </p>
               {user?.role === ROLES.CUSTOMER && !searchTerm && (
                 <Link
-                  to="/tickets/new"
+                  to="new"
                   className="btn btn-primary"
                 >
                   Create Ticket

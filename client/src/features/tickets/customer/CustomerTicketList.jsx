@@ -55,7 +55,7 @@ const CustomerTicketList = () => {
           </p>
         </div>
         <Link
-          to="/tickets/new"
+          to="new"
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -144,7 +144,7 @@ const CustomerTicketList = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <Link 
-                        to={`/tickets/${ticket._id}`}
+                        to={ticket._id}
                         className="text-lg font-medium text-gray-900 hover:text-primary-600"
                       >
                         {ticket.title}
@@ -177,7 +177,7 @@ const CustomerTicketList = () => {
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       <Link
-                        to={`/tickets/${ticket._id}`}
+                        to={ticket._id}
                         className="btn btn-secondary text-sm px-3 py-1 flex items-center"
                       >
                         <MessageCircle className="h-3 w-3 mr-1" />
@@ -224,7 +224,7 @@ const CustomerTicketList = () => {
               </p>
               {!searchTerm && (
                 <Link
-                  to="/tickets/new"
+                  to="new"
                   className="btn btn-primary"
                 >
                   Create Your First Ticket

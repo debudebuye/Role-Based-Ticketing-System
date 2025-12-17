@@ -30,7 +30,7 @@ const CreateTicketPage = () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['recent-tickets'] });
       queryClient.invalidateQueries({ queryKey: ['ticket-stats'] });
-      navigate('/tickets');
+      navigate('/app/tickets');
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to create ticket');
