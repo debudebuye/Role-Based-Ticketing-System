@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from '../auth.context.jsx';
+import { ErrorAlert } from '../../../shared/components/index.js';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,19 +26,12 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      clearError();
-    }
-  }, [error, clearError]);
-
   const onSubmit = async (data) => {
     try {
       await login(data);
       toast.success('Login successful!');
     } catch (err) {
-      // Error is handled by context
+      // Error will be displayed inline, no need for toast
     }
   };
 
@@ -115,6 +109,13 @@ const LoginPage = () => {
               )}
             </div>
           </div>
+
+          {/* Display authentication error inline */}
+          <ErrorAlert 
+            error={error}
+            title="Authentication Failed"
+            onDismiss={clearError}
+          />
 
           <div>
             <button

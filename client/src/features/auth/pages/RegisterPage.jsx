@@ -5,6 +5,9 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../auth.context.jsx';
 import { ROLES, ROLE_LABELS } from '../../../shared/utils/constants.js';
+import { validatePassword } from '../../../shared/utils/passwordValidation.js';
+import PasswordStrengthIndicator from '../../../shared/components/PasswordStrengthIndicator.jsx';
+import { ErrorAlert } from '../../../shared/components/index.js';
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,19 +33,12 @@ const RegisterPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      clearError();
-    }
-  }, [error, clearError]);
-
   const onSubmit = async (data) => {
     try {
       await registerUser(data);
       toast.success('Registration successful!');
     } catch (err) {
-      // Error is handled by context
+      // Error will be displayed inline, no need for toast
     }
   };
 
@@ -119,9 +115,9 @@ const RegisterPage = () => {
                 <input
                   {...register('password', {
                     required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters'
+                    validate: (value) => {
+                      const errors = validatePassword(value);
+                      return errors.length === 0 || errors[0];
                     }
                   })}
                   type={showPassword ? 'text' : 'password'}
@@ -143,6 +139,7 @@ const RegisterPage = () => {
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
+              <PasswordStrengthIndicator password={password} />
             </div>
 
             <div>
@@ -188,6 +185,13 @@ const RegisterPage = () => {
               />
             </div>
           </div>
+
+          {/* Display registration error inline */}
+          <ErrorAlert 
+            error={error}
+            title="Registration Failed"
+            onDismiss={clearError}
+          />
 
           <div>
             <button

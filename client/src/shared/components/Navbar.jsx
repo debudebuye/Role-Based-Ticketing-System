@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Search, User, LogOut, Settings } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings, Ticket } from 'lucide-react';
 import { useAuth } from '../../features/auth/auth.context.jsx';
 import { formatUserName, getInitials } from '../utils/helpers.js';
+import ConfirmDialog from './ConfirmDialog.jsx';
+import { useLogoutConfirmation } from '../hooks/useLogoutConfirmation.js';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { 
+    showLogoutConfirm, 
+    handleLogoutClick, 
+    handleLogoutConfirm, 
+    handleLogoutCancel 
+  } = useLogoutConfirmation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogoutClickWithMenu = () => {
     setShowUserMenu(false);
+    handleLogoutClick();
   };
 
   return (
@@ -19,9 +27,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2">
+            <Link to="/dashboard" className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TM</span>
+                <Ticket className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-semibold text-gray-900">
                 Ticket Manager
@@ -91,7 +99,7 @@ const Navbar = () => {
                   </Link>
                   <hr className="my-1" />
                   <button
-                    onClick={handleLogout}
+                    onClick={handleLogoutClickWithMenu}
                     className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
@@ -103,6 +111,18 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+        title="Confirm Logout"
+        message={`Are you sure you want to sign out, ${user?.name}? You will need to log in again to access your account and any unsaved work will be lost.`}
+        confirmText="Sign Out"
+        cancelText="Stay Logged In"
+        type="warning"
+      />
     </nav>
   );
 };

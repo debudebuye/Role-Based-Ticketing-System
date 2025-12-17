@@ -12,7 +12,7 @@ const AgentTicketList = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('assigned'); // assigned, available, all
+  const [activeTab, setActiveTab] = useState('all'); // all, assigned
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
@@ -22,19 +22,16 @@ const AgentTicketList = () => {
   const [rejectingTicket, setRejectingTicket] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  // Fetch tickets based on active tab
+  // Agents can see all tickets but with different filtering options
   const getTicketFilters = () => {
     const baseFilters = { ...filters, search: searchTerm || undefined };
     
     switch (activeTab) {
       case 'assigned':
         return { ...baseFilters, assignedTo: user._id };
-      case 'available':
-        return { ...baseFilters, assignedTo: 'unassigned', status: 'open' };
       case 'all':
-        return baseFilters;
       default:
-        return { ...baseFilters, assignedTo: user._id };
+        return baseFilters;
     }
   };
 
@@ -47,17 +44,7 @@ const AgentTicketList = () => {
   const tickets = ticketsData?.tickets || [];
   const pagination = ticketsData?.pagination || {};
 
-  // Self-assign mutation
-  const selfAssignMutation = useMutation({
-    mutationFn: (ticketId) => ticketService.assignTicket(ticketId, user._id),
-    onSuccess: () => {
-      toast.success('Ticket assigned to you successfully!');
-      queryClient.invalidateQueries({ queryKey: ['agent-tickets'] });
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to assign ticket');
-    }
-  });
+
 
   // Update status mutation
   const updateStatusMutation = useMutation({
@@ -109,9 +96,9 @@ const AgentTicketList = () => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 
-  const handleSelfAssign = (ticketId) => {
-    selfAssignMutation.mutate(ticketId);
-  };
+
+
+
 
   const handleStartWork = (ticketId) => {
     updateStatusMutation.mutate({ ticketId, status: 'in_progress' });
@@ -149,18 +136,17 @@ const AgentTicketList = () => {
   const acceptedCount = tickets.filter(t => t.assignedTo?._id === user._id && t.acceptanceStatus === 'accepted').length;
   
   const tabs = [
-    { key: 'assigned', label: 'My Tickets', icon: Ticket, count: activeTab === 'assigned' ? tickets.length : null },
-    { key: 'available', label: 'Available', icon: Clock, count: activeTab === 'available' ? tickets.length : null },
-    { key: 'all', label: 'All Tickets', icon: CheckCircle, count: activeTab === 'all' ? tickets.length : null }
+    { key: 'all', label: 'All Tickets', icon: Ticket, count: activeTab === 'all' ? tickets.length : null },
+    { key: 'assigned', label: 'My Assigned', icon: CheckCircle, count: activeTab === 'assigned' ? tickets.length : null }
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Tickets (Agent)</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Tickets (Agent View)</h1>
           <p className="text-gray-600">
-            Manage your assigned tickets and pick up new work
+            View all tickets and work on those assigned to you by managers
           </p>
         </div>
         
@@ -360,29 +346,24 @@ const AgentTicketList = () => {
                       )}
                     </div>
                     
-                    {/* Action buttons - now more prominent on the right */}
+                    {/* Action buttons - context-aware based on assignment status */}
                     <div className="flex flex-col space-y-2 ml-4 min-w-max">
-                      {/* Available tickets - self assign */}
-                      {activeTab === 'available' && !ticket.assignedTo && (
+                      {/* Unassigned tickets - read-only for agents */}
+                      {!ticket.assignedTo && (
                         <>
-                          <button
-                            onClick={() => handleSelfAssign(ticket._id)}
-                            disabled={selfAssignMutation.isPending}
-                            className="btn btn-primary text-sm px-4 py-2 flex items-center justify-center min-w-[120px]"
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            {selfAssignMutation.isPending ? 'Taking...' : 'Take It'}
-                          </button>
                           <Link
                             to={`/tickets/${ticket._id}`}
                             className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
-                            Review Details
+                            View Details
                           </Link>
+                          <div className="text-xs text-gray-500 text-center">
+                            Awaiting Assignment
+                          </div>
                         </>
                       )}
-                      
-                      {/* Pending assignment - show accept/reject buttons prominently */}
+
+                      {/* Assigned to current user - pending acceptance */}
                       {ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'pending' && (
                         <>
                           <button
@@ -410,7 +391,7 @@ const AgentTicketList = () => {
                         </>
                       )}
                       
-                      {/* Accepted tickets - show work button */}
+                      {/* Assigned to current user - accepted */}
                       {ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'accepted' && (
                         <>
                           {ticket.status === 'open' && (
@@ -432,7 +413,7 @@ const AgentTicketList = () => {
                         </>
                       )}
                       
-                      {/* Rejected tickets - show view only */}
+                      {/* Assigned to current user - rejected */}
                       {ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'rejected' && (
                         <Link
                           to={`/tickets/${ticket._id}`}
@@ -441,26 +422,19 @@ const AgentTicketList = () => {
                           View Details
                         </Link>
                       )}
-                      
-                      {/* Other agents' tickets or unassigned in 'all' tab */}
-                      {activeTab === 'all' && (ticket.assignedTo?._id !== user._id || !ticket.assignedTo) && (
+
+                      {/* Assigned to other agents - read-only */}
+                      {ticket.assignedTo && ticket.assignedTo._id !== user._id && (
                         <>
-                          {!ticket.assignedTo && (
-                            <button
-                              onClick={() => handleSelfAssign(ticket._id)}
-                              disabled={selfAssignMutation.isPending}
-                              className="btn btn-primary text-sm px-4 py-2 flex items-center justify-center min-w-[120px]"
-                            >
-                              <Play className="h-4 w-4 mr-2" />
-                              {selfAssignMutation.isPending ? 'Taking...' : 'Take It'}
-                            </button>
-                          )}
                           <Link
                             to={`/tickets/${ticket._id}`}
                             className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
-                            {!ticket.assignedTo ? 'Review' : 'View Details'}
+                            View Details
                           </Link>
+                          <div className="text-xs text-gray-500 text-center">
+                            Assigned to {ticket.assignedTo.name}
+                          </div>
                         </>
                       )}
                     </div>
@@ -499,12 +473,10 @@ const AgentTicketList = () => {
             <div className="text-center py-12">
               <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {activeTab === 'assigned' ? 'No tickets assigned' : 
-                 activeTab === 'available' ? 'No available tickets' : 'No tickets found'}
+                {activeTab === 'assigned' ? 'No tickets assigned' : 'No tickets found'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {activeTab === 'assigned' ? 'Tickets will appear here when they are assigned to you.' :
-                 activeTab === 'available' ? 'Check back later for new tickets to work on.' :
+                {activeTab === 'assigned' ? 'Tickets will appear here when they are assigned to you by a manager.' :
                  searchTerm ? 'Try adjusting your search terms or filters.' : 'No tickets match your criteria.'}
               </p>
             </div>

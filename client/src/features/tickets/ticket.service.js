@@ -54,6 +54,8 @@ export const ticketService = {
     return response.data.data.ticket;
   },
 
+
+
   async acceptTicket(id) {
     const response = await api.put(`/tickets/${id}/accept`);
     return response.data.data.ticket;

@@ -70,13 +70,11 @@ const TicketDetailPage = () => {
     }
   });
 
-  // Assign ticket mutation
+  // Assign ticket mutation (for managers/admins)
   const assignTicketMutation = useMutation({
     mutationFn: (agentId) => ticketService.assignTicket(id, agentId),
-    onSuccess: (data, variables) => {
-      // Check if it's self-assignment
-      const isSelfAssignment = variables === user._id;
-      toast.success(isSelfAssignment ? 'Ticket assigned to you successfully!' : 'Ticket assigned successfully!');
+    onSuccess: () => {
+      toast.success('Ticket assigned successfully!');
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
       setShowAssignModal(false);
     },
@@ -84,6 +82,8 @@ const TicketDetailPage = () => {
       toast.error(error.response?.data?.message || 'Failed to assign ticket');
     }
   });
+
+
 
   // Accept ticket mutation
   const acceptTicketMutation = useMutation({
@@ -121,6 +121,8 @@ const TicketDetailPage = () => {
   const handleTicketAssign = (agentId) => {
     assignTicketMutation.mutate(agentId);
   };
+
+
 
   const handleAcceptTicket = () => {
     acceptTicketMutation.mutate();
@@ -626,15 +628,11 @@ const TicketDetailPage = () => {
                       </button>
                     )}
                     
-                    {/* Self-assign button for unassigned tickets */}
+                    {/* Unassigned tickets - agents can only view */}
                     {!ticket.assignedTo && (
-                      <button 
-                        onClick={() => handleTicketAssign(user._id)}
-                        disabled={assignTicketMutation.isPending}
-                        className="btn btn-success w-full"
-                      >
-                        {assignTicketMutation.isPending ? 'Assigning...' : 'Take This Ticket'}
-                      </button>
+                      <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded">
+                        This ticket is unassigned. Only managers can assign tickets to agents.
+                      </div>
                     )}
                     
                     {/* Show rejection info */}

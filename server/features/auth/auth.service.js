@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../users/user.model.js';
 import { AppError } from '../../shared/middleware/error.middleware.js';
+import emailService from '../../shared/services/email.service.js';
 
 export class AuthService {
   static generateToken(userId) {
@@ -23,6 +24,15 @@ export class AuthService {
     
     // Generate token
     const token = this.generateToken(user._id);
+    
+    // Send welcome email (don't wait for it to complete)
+    try {
+      await emailService.sendWelcomeEmail(user);
+      console.log(`📧 Welcome email sent to ${user.email}`);
+    } catch (error) {
+      console.error(`❌ Failed to send welcome email to ${user.email}:`, error.message);
+      // Don't throw error - registration should still succeed even if email fails
+    }
     
     return {
       user: user.toSafeObject(),

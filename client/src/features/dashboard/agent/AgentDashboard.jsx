@@ -17,9 +17,9 @@ const AgentDashboard = () => {
     refetchInterval: 30000
   });
 
-  // Fetch assigned tickets for agent
+  // Fetch recent tickets for agent (showing assigned ones first)
   const { data: ticketsData, isLoading: ticketsLoading } = useQuery({
-    queryKey: ['agent-assigned-tickets'],
+    queryKey: ['agent-recent-tickets'],
     queryFn: () => ticketService.getAllTickets({ 
       page: 1, 
       limit: 10, 
@@ -29,7 +29,10 @@ const AgentDashboard = () => {
     refetchInterval: 30000
   });
 
-  const assignedTickets = ticketsData?.tickets || [];
+  const allTickets = ticketsData?.tickets || [];
+  // Prioritize assigned tickets for dashboard display
+  const assignedTickets = allTickets.filter(ticket => ticket.assignedTo?._id === user._id);
+  const displayTickets = assignedTickets.length > 0 ? assignedTickets : allTickets.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -38,7 +41,7 @@ const AgentDashboard = () => {
           Agent Dashboard
         </h1>
         <p className="text-gray-600">
-          Your assigned tickets and workload
+          Tickets assigned to you by managers
         </p>
       </div>
 
@@ -104,7 +107,9 @@ const AgentDashboard = () => {
       <div className="card">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">My Assigned Tickets</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {assignedTickets.length > 0 ? 'My Assigned Tickets' : 'Recent Tickets'}
+            </h2>
             <Link
               to="/tickets"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
@@ -126,9 +131,9 @@ const AgentDashboard = () => {
                 </div>
               ))}
             </div>
-          ) : assignedTickets.length > 0 ? (
+          ) : displayTickets.length > 0 ? (
             <div className="space-y-4">
-              {assignedTickets.map((ticket) => (
+              {displayTickets.map((ticket) => (
                 <div key={ticket._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <h3 className="font-medium text-gray-900">{ticket.title}</h3>
@@ -153,9 +158,17 @@ const AgentDashboard = () => {
                   <div className="flex items-center space-x-2">
                     <Link
                       to={`/tickets/${ticket._id}`}
-                      className="btn btn-primary text-sm px-3 py-1"
+                      className={`btn text-sm px-3 py-1 ${
+                        ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'accepted'
+                          ? 'btn-primary' 
+                          : 'btn-secondary'
+                      }`}
                     >
-                      Work on it
+                      {ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'accepted'
+                        ? 'Work on it'
+                        : ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'pending'
+                        ? 'Review Assignment'
+                        : 'View Details'}
                     </Link>
                   </div>
                 </div>
@@ -164,9 +177,9 @@ const AgentDashboard = () => {
           ) : (
             <div className="text-center py-8">
               <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No tickets assigned yet</p>
+              <p className="text-gray-600">No tickets available</p>
               <p className="text-sm text-gray-500 mt-1">
-                Tickets will appear here when they are assigned to you
+                Tickets will appear here as they are created and assigned
               </p>
             </div>
           )}

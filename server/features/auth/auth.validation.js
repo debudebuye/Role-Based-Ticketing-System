@@ -23,13 +23,48 @@ export const registerSchema = Joi.object({
     }),
   
   password: Joi.string()
-    .min(6)
+    .min(8)
     .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .required()
+    .custom((value, helpers) => {
+      // List of common weak passwords to reject
+      const weakPasswords = [
+        'password', 'password123', '12345678', 'qwerty123', 'admin123',
+        'welcome123', 'letmein123', 'monkey123', '123456789', 'password1',
+        'qwertyuiop', 'asdfghjkl', 'zxcvbnm123', 'iloveyou123', 'welcome1',
+        'admin1234', 'root1234', 'test1234', 'user1234', 'guest1234'
+      ];
+      
+      if (weakPasswords.includes(value.toLowerCase())) {
+        return helpers.error('password.weak');
+      }
+      
+      // Check for repeated characters (more than 3 in a row)
+      if (/(.)\1{3,}/.test(value)) {
+        return helpers.error('password.repeated');
+      }
+      
+      // Check for sequential characters (like 123456 or abcdef)
+      const sequences = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'qwertyuiopasdfghjklzxcvbnm'];
+      for (const seq of sequences) {
+        for (let i = 0; i <= seq.length - 4; i++) {
+          if (value.toLowerCase().includes(seq.substring(i, i + 4))) {
+            return helpers.error('password.sequential');
+          }
+        }
+      }
+      
+      return value;
+    })
     .messages({
       'string.empty': 'Password is required',
-      'string.min': 'Password must be at least 6 characters',
-      'string.max': 'Password cannot exceed 128 characters'
+      'string.min': 'Password must be at least 8 characters long',
+      'string.max': 'Password cannot exceed 128 characters',
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+      'password.weak': 'This password is too common and easily guessable. Please choose a stronger password',
+      'password.repeated': 'Password cannot contain more than 3 repeated characters in a row',
+      'password.sequential': 'Password cannot contain sequential characters (like 1234 or abcd)'
     }),
   
   role: Joi.string()
@@ -80,13 +115,48 @@ export const changePasswordSchema = Joi.object({
     }),
   
   newPassword: Joi.string()
-    .min(6)
+    .min(8)
     .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .required()
+    .custom((value, helpers) => {
+      // List of common weak passwords to reject
+      const weakPasswords = [
+        'password', 'password123', '12345678', 'qwerty123', 'admin123',
+        'welcome123', 'letmein123', 'monkey123', '123456789', 'password1',
+        'qwertyuiop', 'asdfghjkl', 'zxcvbnm123', 'iloveyou123', 'welcome1',
+        'admin1234', 'root1234', 'test1234', 'user1234', 'guest1234'
+      ];
+      
+      if (weakPasswords.includes(value.toLowerCase())) {
+        return helpers.error('password.weak');
+      }
+      
+      // Check for repeated characters (more than 3 in a row)
+      if (/(.)\1{3,}/.test(value)) {
+        return helpers.error('password.repeated');
+      }
+      
+      // Check for sequential characters (like 123456 or abcdef)
+      const sequences = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'qwertyuiopasdfghjklzxcvbnm'];
+      for (const seq of sequences) {
+        for (let i = 0; i <= seq.length - 4; i++) {
+          if (value.toLowerCase().includes(seq.substring(i, i + 4))) {
+            return helpers.error('password.sequential');
+          }
+        }
+      }
+      
+      return value;
+    })
     .messages({
       'string.empty': 'New password is required',
-      'string.min': 'New password must be at least 6 characters',
-      'string.max': 'New password cannot exceed 128 characters'
+      'string.min': 'New password must be at least 8 characters long',
+      'string.max': 'New password cannot exceed 128 characters',
+      'string.pattern.base': 'New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+      'password.weak': 'This password is too common and easily guessable. Please choose a stronger password',
+      'password.repeated': 'New password cannot contain more than 3 repeated characters in a row',
+      'password.sequential': 'New password cannot contain sequential characters (like 1234 or abcd)'
     })
 });
 

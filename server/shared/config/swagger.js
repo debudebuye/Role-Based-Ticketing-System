@@ -81,6 +81,14 @@ const options = {
               description: 'User email address',
               example: 'john.doe@example.com'
             },
+            password: {
+              type: 'string',
+              minLength: 8,
+              maxLength: 128,
+              pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$',
+              description: 'Strong password with at least 8 characters, including uppercase, lowercase, number, and special character (@$!%*?&). Cannot be common passwords or contain sequential/repeated characters.',
+              example: 'SecurePass123!'
+            },
             role: {
               type: 'string',
               enum: ['admin', 'manager', 'agent', 'customer'],
@@ -265,6 +273,32 @@ const options = {
               type: 'string',
               format: 'date-time',
               description: 'Last update timestamp'
+            }
+          }
+        },
+        PasswordRequirements: {
+          type: 'object',
+          description: 'Password strength requirements',
+          properties: {
+            minLength: {
+              type: 'number',
+              example: 8,
+              description: 'Minimum password length'
+            },
+            requirements: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              example: [
+                'At least one uppercase letter (A-Z)',
+                'At least one lowercase letter (a-z)',
+                'At least one number (0-9)',
+                'At least one special character (@$!%*?&)',
+                'No common passwords (password123, admin123, etc.)',
+                'No more than 3 repeated characters in a row',
+                'No sequential characters (1234, abcd, etc.)'
+              ]
             }
           }
         },

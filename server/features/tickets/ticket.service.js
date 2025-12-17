@@ -16,19 +16,8 @@ export class TicketService {
         query.createdBy = user._id;
         break;
       case ROLES.AGENT:
-        // Agents can see:
-        // 1. Their assigned tickets (when assignedTo filter is their ID)
-        // 2. Unassigned tickets (when assignedTo filter is 'unassigned')
-        // 3. All tickets (when no assignedTo filter - for read-only view)
-        if (assignedTo === user._id.toString()) {
-          query.assignedTo = user._id;
-        } else if (assignedTo === 'unassigned') {
-          query.assignedTo = null;
-        } else if (assignedTo && assignedTo !== 'unassigned') {
-          // If trying to see tickets assigned to someone else, deny access
-          query.assignedTo = user._id; // Fallback to their own tickets
-        }
-        // If no assignedTo filter, allow seeing all tickets (read-only)
+        // Agents can see all tickets for visibility, but can only work on assigned ones
+        // No filtering needed - they can see everything
         break;
       case ROLES.MANAGER:
       case ROLES.ADMIN:
@@ -300,14 +289,8 @@ export class TicketService {
       case ROLES.MANAGER:
         return true;
       case ROLES.AGENT:
-        // Agents can view:
-        // 1. Their assigned tickets
-        // 2. Unassigned tickets (to potentially take them)
-        // 3. Any ticket for read-only purposes
-        return ticket.assignedTo?.toString() === user._id.toString() || 
-               ticket.assignedTo === null || 
-               ticket.assignedTo === undefined ||
-               true; // Allow read access to all tickets for agents
+        // Agents can view all tickets for visibility and awareness
+        return true;
       case ROLES.CUSTOMER:
         // Handle both populated and non-populated createdBy
         const createdById = ticket.createdBy?._id || ticket.createdBy;
@@ -324,10 +307,11 @@ export class TicketService {
       case ROLES.MANAGER:
         return true;
       case ROLES.AGENT:
-        // Agents can only update status and add comments
+        // Agents can only update tickets that are assigned to them AND accepted
         const allowedFields = ['status'];
         const updateFields = Object.keys(updateData);
         return ticket.assignedTo?.toString() === user._id.toString() &&
+               ticket.acceptanceStatus === 'accepted' &&
                updateFields.every(field => allowedFields.includes(field));
       case ROLES.CUSTOMER:
         // Customers can only update their own tickets and limited fields

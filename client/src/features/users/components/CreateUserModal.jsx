@@ -6,11 +6,15 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/auth.context.jsx';
 import { userService } from '../user.service.js';
 import { ROLES } from '../../../shared/utils/constants.js';
+import { validatePassword } from '../../../shared/utils/passwordValidation.js';
+import PasswordStrengthIndicator from '../../../shared/components/PasswordStrengthIndicator.jsx';
 
 const CreateUserModal = ({ isOpen, onClose }) => {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
+  
+  const password = watch('password');
 
   const createUserMutation = useMutation({
     mutationFn: (userData) => userService.createUser(userData),
@@ -124,9 +128,9 @@ const CreateUserModal = ({ isOpen, onClose }) => {
               type="password"
               {...register('password', {
                 required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters'
+                validate: (value) => {
+                  const errors = validatePassword(value);
+                  return errors.length === 0 || errors[0];
                 }
               })}
               className="input w-full"
@@ -135,6 +139,7 @@ const CreateUserModal = ({ isOpen, onClose }) => {
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
             )}
+            <PasswordStrengthIndicator password={password} />
           </div>
 
           <div>

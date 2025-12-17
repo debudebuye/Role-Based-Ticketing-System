@@ -1,6 +1,7 @@
 import { User } from './user.model.js';
 import { AppError } from '../../shared/middleware/error.middleware.js';
 import { ROLES } from '../../shared/constants/roles.js';
+import emailService from '../../shared/services/email.service.js';
 
 export class UserService {
   static async getAllUsers(filters = {}, pagination = {}, currentUser) {
@@ -101,6 +102,16 @@ export class UserService {
     try {
       const user = await User.create(userData);
       console.log('User created successfully:', user._id);
+      
+      // Send welcome email (don't wait for it to complete)
+      try {
+        await emailService.sendWelcomeEmail(user);
+        console.log(`📧 Welcome email sent to ${user.email}`);
+      } catch (error) {
+        console.error(`❌ Failed to send welcome email to ${user.email}:`, error.message);
+        // Don't throw error - user creation should still succeed even if email fails
+      }
+      
       return user.toSafeObject();
     } catch (error) {
       console.error('Error creating user:', error);

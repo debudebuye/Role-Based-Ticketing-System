@@ -103,6 +103,8 @@ export class TicketController {
     });
   }
 
+
+
   static async acceptTicket(req, res) {
     const ticket = await TicketService.acceptTicket(req.params.id, req.user);
     
