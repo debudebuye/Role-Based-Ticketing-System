@@ -1,0 +1,1 @@
+A comprehensive ticket management platform with role-based access control for organizations. Features include ticket creation, assignment, priority management, status tracking, and detailed reporting with different user roles (Admin, Manager, Agent, Customer).
