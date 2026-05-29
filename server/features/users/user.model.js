@@ -49,6 +49,35 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     trim: true
+  },
+  // ── Account lockout ──────────────────────────────────────────────────────────
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+    select: false
+  },
+  lockUntil: {
+    type: Date,
+    default: null,
+    select: false
+  },
+  // ── Password reset ────────────────────────────────────────────────────────
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpiry: {
+    type: Date,
+    select: false
+  },
+  // ── Refresh token rotation tracking ──────────────────────────────────────
+  // Stores SHA-256 hash of the last issued refresh token.
+  // On rotation, the old hash is replaced. Any reuse of a superseded token
+  // is rejected, preventing stolen-token replay attacks.
+  refreshTokenHash: {
+    type: String,
+    default: null,
+    select: false
   }
 }, {
   timestamps: true,
@@ -82,6 +111,30 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 userSchema.methods.updateLastLogin = function() {
   this.lastLogin = new Date();
   return this.save({ validateBeforeSave: false });
+};
+
+// Increment failed login attempts; lock after 5 failures for 15 min
+userSchema.methods.incFailedLogins = async function() {
+  const MAX_ATTEMPTS = 5;
+  const LOCK_DURATION = 15 * 60 * 1000; // 15 minutes
+
+  this.failedLoginAttempts = (this.failedLoginAttempts || 0) + 1;
+  if (this.failedLoginAttempts >= MAX_ATTEMPTS) {
+    this.lockUntil = new Date(Date.now() + LOCK_DURATION);
+  }
+  return this.save({ validateBeforeSave: false });
+};
+
+// Reset failed attempts on successful login
+userSchema.methods.resetFailedLogins = async function() {
+  this.failedLoginAttempts = 0;
+  this.lockUntil = null;
+  return this.save({ validateBeforeSave: false });
+};
+
+// Check if account is currently locked
+userSchema.methods.isLocked = function() {
+  return this.lockUntil && this.lockUntil > new Date();
 };
 
 // Get user without sensitive data

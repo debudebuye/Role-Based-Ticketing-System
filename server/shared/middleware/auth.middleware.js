@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../../features/users/user.model.js';
+import logger from '../utils/logger.js';
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -24,21 +25,25 @@ export const authenticate = async (req, res, next) => {
           message: 'Invalid token. User not found.'
         });
       }
+
+      if (!user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Account is deactivated. Please contact an administrator.'
+        });
+      }
       
       req.user = user;
       next();
     } catch (jwtError) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token.'
-      });
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ success: false, message: 'Token expired.' });
+      }
+      return res.status(401).json({ success: false, message: 'Invalid token.' });
     }
   } catch (error) {
-    console.error('Authentication middleware error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during authentication'
-    });
+    logger.error('Authentication middleware error', { err: error });
+    next(error);
   }
 };
 
@@ -63,7 +68,7 @@ export const optionalAuth = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error('Optional auth middleware error:', error);
+    logger.error('Optional auth middleware error', { err: error });
     req.user = null;
     next();
   }

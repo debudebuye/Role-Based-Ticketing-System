@@ -67,11 +67,14 @@ export const registerSchema = Joi.object({
       'password.sequential': 'Password cannot contain sequential characters (like 1234 or abcd)'
     }),
   
+  // Public registration is restricted to customer role only.
+  // Privileged roles (admin, manager, agent) must be assigned by an admin
+  // via the user management API after account creation.
   role: Joi.string()
-    .valid(...Object.values(ROLES))
+    .valid(ROLES.CUSTOMER)
     .default(ROLES.CUSTOMER)
     .messages({
-      'any.only': `Role must be one of: ${Object.values(ROLES).join(', ')}`
+      'any.only': 'Public registration is only available for customer accounts. Contact an administrator to create privileged accounts.'
     }),
   
   department: Joi.string()
@@ -184,6 +187,25 @@ export const updateProfileSchema = Joi.object({
     .allow('')
     .messages({
       'string.pattern.base': 'Please enter a valid phone number'
+    })
+});
+
+export const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().lowercase().required()
+    .messages({ 'string.empty': 'Email is required', 'string.email': 'Please enter a valid email' })
+});
+
+export const resetPasswordSchema = Joi.object({
+  token: Joi.string().required()
+    .messages({ 'string.empty': 'Reset token is required' }),
+  newPassword: Joi.string()
+    .min(8).max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .required()
+    .messages({
+      'string.empty':        'New password is required',
+      'string.min':          'Password must be at least 8 characters',
+      'string.pattern.base': 'Password must contain uppercase, lowercase, number and special character'
     })
 });
 

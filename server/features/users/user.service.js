@@ -2,11 +2,20 @@ import { User } from './user.model.js';
 import { AppError } from '../../shared/middleware/error.middleware.js';
 import { ROLES } from '../../shared/constants/roles.js';
 import emailService from '../../shared/services/email.service.js';
+import logger from '../../shared/utils/logger.js';
 
 export class UserService {
   static async getAllUsers(filters = {}, pagination = {}, currentUser) {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = pagination;
     const { role, isActive, search } = filters;
+
+    // Sanitise pagination — cap limit to prevent DoS via huge result sets
+    const safePage  = Math.max(1, parseInt(page)  || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit) || 10));
+
+    // Allowlist sortBy to prevent arbitrary field exposure
+    const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name', 'email', 'role', 'department'];
+    const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
     
     // Build query
     const query = {};
@@ -46,15 +55,15 @@ export class UserService {
     }
     
     // Calculate pagination
-    const skip = (page - 1) * limit;
-    const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
+    const skip = (safePage - 1) * safeLimit;
+    const sort = { [safeSortBy]: sortOrder === 'desc' ? -1 : 1 };
     
     // Execute queries
     const [users, total] = await Promise.all([
       User.find(query)
         .sort(sort)
         .skip(skip)
-        .limit(limit)
+        .limit(safeLimit)
         .select('-password'),
       User.countDocuments(query)
     ]);
@@ -62,10 +71,10 @@ export class UserService {
     return {
       users,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: safeLimit,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / safeLimit)
       }
     };
   }
@@ -79,8 +88,6 @@ export class UserService {
   }
   
   static async createUser(userData, currentUser) {
-    console.log('Creating user with data:', userData);
-    
     // Role hierarchy validation for creation
     if (currentUser.role === ROLES.ADMIN) {
       // Admins can create any user
@@ -92,31 +99,24 @@ export class UserService {
     } else {
       throw new AppError('Insufficient permissions to create users', 403);
     }
-    
+
     // Check if user already exists
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
       throw new AppError('User already exists with this email', 400);
     }
-    
+
+    const user = await User.create(userData);
+    logger.info('User created', { userId: user._id, role: user.role, createdBy: currentUser._id });
+
+    // Send welcome email — failure must not block user creation
     try {
-      const user = await User.create(userData);
-      console.log('User created successfully:', user._id);
-      
-      // Send welcome email (don't wait for it to complete)
-      try {
-        await emailService.sendWelcomeEmail(user);
-        console.log(`📧 Welcome email sent to ${user.email}`);
-      } catch (error) {
-        console.error(`❌ Failed to send welcome email to ${user.email}:`, error.message);
-        // Don't throw error - user creation should still succeed even if email fails
-      }
-      
-      return user.toSafeObject();
+      await emailService.sendWelcomeEmail(user);
     } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
+      logger.warn('Failed to send welcome email', { err: error, userId: user._id });
     }
+
+    return user.toSafeObject();
   }
   
   static async updateUser(userId, updateData, currentUser) {

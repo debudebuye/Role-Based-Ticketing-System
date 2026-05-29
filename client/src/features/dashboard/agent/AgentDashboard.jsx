@@ -111,7 +111,7 @@ const AgentDashboard = () => {
               {assignedTickets.length > 0 ? 'My Assigned Tickets' : 'Recent Tickets'}
             </h2>
             <Link
-              to="/tickets"
+              to="/app/tickets"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
             >
               View all
@@ -157,7 +157,7 @@ const AgentDashboard = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      to={`/tickets/${ticket._id}`}
+                      to={`/app/tickets/${ticket._id}`}
                       className={`btn text-sm px-3 py-1 ${
                         ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'accepted'
                           ? 'btn-primary' 

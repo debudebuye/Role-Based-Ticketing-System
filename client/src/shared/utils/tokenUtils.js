@@ -44,11 +44,12 @@ export const isTokenValid = (token) => {
  * Clear invalid tokens from localStorage
  */
 export const clearInvalidTokens = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   if (token && isTokenExpired(token)) {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    return true; // Token was cleared
+    return true;
   }
-  return false; // Token is still valid or doesn't exist
+  return false;
 };

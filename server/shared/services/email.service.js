@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { promises as fs } from 'fs';
 import path from 'path';
+import logger from '../utils/logger.js';
 
 class EmailService {
   constructor() {
@@ -11,21 +12,13 @@ class EmailService {
 
   async initializeTransporter() {
     if (this.initialized) {
-      return; // Already initialized
+      return;
     }
 
     try {
-      // Check if real email credentials are provided
       const hasEmailCredentials = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
-      console.log('🔍 Checking email credentials:', {
-        EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Not set',
-        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'Set' : 'Not set',
-        hasCredentials: hasEmailCredentials
-      });
-      
+
       if (hasEmailCredentials) {
-        console.log('📧 Using real email service with credentials');
-        // Real email configuration
         this.transporter = nodemailer.createTransport({
           service: process.env.EMAIL_SERVICE || 'gmail',
           auth: {
@@ -35,8 +28,7 @@ class EmailService {
         });
         this.emailMode = 'real';
       } else {
-        console.log('📧 No email credentials found, using Ethereal Email (test service)');
-        // Development configuration (Ethereal Email for testing)
+        logger.info('No email credentials found, using Ethereal test email');
         const testAccount = await nodemailer.createTestAccount();
         this.transporter = nodemailer.createTransport({
           host: 'smtp.ethereal.email',
@@ -48,26 +40,16 @@ class EmailService {
           }
         });
         this.emailMode = 'test';
-        console.log('📧 Test email credentials:', {
-          user: testAccount.user,
-          pass: testAccount.pass
-        });
       }
 
-      // Verify connection
       await this.transporter.verify();
-      console.log(`📧 Email service initialized successfully (${this.emailMode} mode)`);
+      logger.info('Email service initialized', { mode: this.emailMode });
       this.initialized = true;
     } catch (error) {
-      console.error('❌ Email service initialization failed:', error.message);
-      // Create a mock transporter for development if real email fails
+      logger.warn('Email service initialization failed — using mock fallback', { err: error });
       this.transporter = {
         sendMail: async (mailOptions) => {
-          console.log('📧 Mock email sent (fallback mode):', {
-            to: mailOptions.to,
-            subject: mailOptions.subject,
-            text: mailOptions.text?.substring(0, 100) + '...'
-          });
+          logger.debug('Mock email (fallback)', { to: mailOptions.to, subject: mailOptions.subject });
           return { messageId: 'mock-' + Date.now() };
         }
       };
@@ -81,16 +63,24 @@ class EmailService {
       const templatePath = path.join(process.cwd(), 'shared', 'templates', 'email', `${templateName}.html`);
       let template = await fs.readFile(templatePath, 'utf-8');
       
-      // Replace variables in template
+      // HTML-escape all variable values before substitution to prevent
+      // injecting markup via user-supplied content (e.g. name, ticket title)
+      const escapeHtml = (str) =>
+        String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
+
       Object.keys(variables).forEach(key => {
         const regex = new RegExp(`{{${key}}}`, 'g');
-        template = template.replace(regex, variables[key]);
+        template = template.replace(regex, escapeHtml(variables[key]));
       });
       
       return template;
     } catch (error) {
-      console.error(`Failed to load email template ${templateName}:`, error.message);
-      // Return a basic template if file loading fails
+      logger.warn(`Failed to load email template ${templateName}`, { err: error });
       return this.getBasicTemplate(variables);
     }
   }
@@ -134,7 +124,7 @@ class EmailService {
       }
 
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@ticketmanagement.com',
+        from: process.env.EMAIL_FROM,
         to: options.to,
         subject: options.subject,
         html: options.html || options.template,
@@ -142,21 +132,17 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       if (this.emailMode === 'test') {
         const previewUrl = nodemailer.getTestMessageUrl(result);
-        console.log('📧 Test email sent successfully!');
-        console.log('🔗 Preview URL:', previewUrl);
-        console.log('💡 This is a test email. To send real emails, add EMAIL_USER and EMAIL_PASSWORD to your .env file');
+        logger.info('Test email sent', { to: mailOptions.to, subject: mailOptions.subject, previewUrl });
       } else if (this.emailMode === 'real') {
-        console.log('📧 Real email sent successfully to:', mailOptions.to);
-      } else {
-        console.log('📧 Mock email logged (no actual email sent)');
+        logger.info('Email sent', { to: mailOptions.to, subject: mailOptions.subject });
       }
 
       return result;
     } catch (error) {
-      console.error('❌ Failed to send email:', error.message);
+      logger.error('Failed to send email', { err: error, to: options.to });
       throw error;
     }
   }
@@ -264,11 +250,10 @@ class EmailService {
       const results = await Promise.allSettled(promises);
       const successful = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
-      
-      console.log(`📧 Bulk email completed: ${successful} sent, ${failed} failed`);
+      logger.info('Bulk email completed', { successful, failed });
       return { successful, failed, results };
     } catch (error) {
-      console.error('❌ Bulk email failed:', error.message);
+      logger.error('Bulk email failed', { err: error });
       throw error;
     }
   }

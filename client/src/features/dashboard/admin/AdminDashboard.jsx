@@ -87,15 +87,15 @@ const AdminDashboard = () => {
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/users" className="btn btn-primary flex items-center justify-center">
+          <Link to="/app/users" className="btn btn-primary flex items-center justify-center">
             <Users className="h-4 w-4 mr-2" />
             Manage Users
           </Link>
-          <Link to="/tickets" className="btn btn-secondary flex items-center justify-center">
+          <Link to="/app/tickets" className="btn btn-secondary flex items-center justify-center">
             <Ticket className="h-4 w-4 mr-2" />
             View All Tickets
           </Link>
-          <Link to="/settings" className="btn btn-secondary flex items-center justify-center">
+          <Link to="/app/settings" className="btn btn-secondary flex items-center justify-center">
             <Settings className="h-4 w-4 mr-2" />
             System Settings
           </Link>

@@ -5,6 +5,7 @@
 
 // Import system routes
 import systemRoutes from './system.routes.js';
+import logger from '../utils/logger.js';
 
 // Import feature routes
 import authRoutes from '../../features/auth/auth.routes.js';
@@ -20,8 +21,7 @@ export const setupV1Routes = (app) => {
   app.use('/api/v1/users', userRoutes);
   app.use('/api/v1/tickets', ticketRoutes);
   app.use('/api/v1/comments', commentRoutes);
-  
-  console.log('✅ API v1 routes configured');
+  logger.info('API v1 routes configured');
 };
 
 /**
@@ -86,23 +86,18 @@ export const setupLegacyRoutes = (app) => {
     });
   });
   
-  console.log('✅ Legacy route redirects configured');
+  logger.info('Legacy route redirects configured');
 };
 
 /**
  * Setup system routes (health, version, etc.)
  */
 export const setupSystemRoutes = (app) => {
-  // System routes (health check at root level, version under /api)
   app.use('/health', systemRoutes);
   app.use('/api', systemRoutes);
-  
-  console.log('✅ System routes configured');
+  logger.info('System routes configured');
 };
 
-/**
- * Setup 404 handler (must be last)
- */
 export const setup404Handler = (app) => {
   app.use('*', (req, res) => {
     res.status(404).json({ 
@@ -115,8 +110,7 @@ export const setup404Handler = (app) => {
       }
     });
   });
-  
-  console.log('✅ 404 handler configured');
+  logger.info('404 handler configured');
 };
 
 /**

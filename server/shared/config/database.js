@@ -1,29 +1,22 @@
 import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 export const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`📦 MongoDB Connected: ${conn.connection.host}`);
-    
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      socketTimeoutMS: 45_000,
+      serverSelectionTimeoutMS: 5_000,
+      retryWrites: true
     });
-    
-    mongoose.connection.on('disconnected', () => {
-      console.log('📦 MongoDB disconnected');
-    });
-    
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      console.log('📦 MongoDB connection closed through app termination');
-      process.exit(0);
-    });
-    
+    logger.info('MongoDB connected', { host: conn.connection.host });
+
+    mongoose.connection.on('error',        (err) => logger.error('MongoDB error', { err }));
+    mongoose.connection.on('disconnected', ()    => logger.warn('MongoDB disconnected'));
+    mongoose.connection.on('reconnected',  ()    => logger.info('MongoDB reconnected'));
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    console.error('❌ Please check your MongoDB Atlas connection and network settings');
+    logger.error('Database connection failed', { err: error });
     process.exit(1);
   }
 };

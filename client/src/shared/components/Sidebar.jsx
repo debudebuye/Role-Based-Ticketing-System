@@ -18,12 +18,12 @@ const Sidebar = () => {
     const baseItems = [
       {
         name: 'Dashboard',
-        href: '/dashboard',
+        href: '/app/dashboard',
         icon: LayoutDashboard
       },
       {
         name: 'Tickets',
-        href: '/tickets',
+        href: '/app/tickets',
         icon: Ticket
       }
     ];
@@ -32,7 +32,7 @@ const Sidebar = () => {
     if (user?.role === ROLES.CUSTOMER) {
       baseItems.push({
         name: 'Create Ticket',
-        href: '/tickets/new',
+        href: '/app/tickets/new',
         icon: Plus
       });
     }
@@ -41,12 +41,12 @@ const Sidebar = () => {
       baseItems.push(
         {
           name: 'Users',
-          href: '/users',
+          href: '/app/users',
           icon: Users
         },
         {
           name: 'Reports',
-          href: '/reports',
+          href: '/app/reports',
           icon: BarChart3
         }
       );
@@ -55,7 +55,7 @@ const Sidebar = () => {
     if (user?.role === ROLES.ADMIN) {
       baseItems.push({
         name: 'Settings',
-        href: '/settings',
+        href: '/app/settings',
         icon: Settings
       });
     }

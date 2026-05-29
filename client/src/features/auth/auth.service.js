@@ -1,26 +1,31 @@
-import api from '../../shared/utils/api.js';
+import DOMPurify from 'dompurify';
+import api, { tokenStore } from '../../shared/utils/api.js';
+
+// Sanitize all string fields in an object before sending to the server
+const sanitize = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, typeof v === 'string' ? DOMPurify.sanitize(v) : v])
+  );
+};
 
 export const authService = {
   async login(credentials) {
-    const response = await api.post('/auth/login', credentials);
-    const { user, token } = response.data.data;
-    
-    // Store in localStorage
-    localStorage.setItem('token', token);
+    const response = await api.post('/auth/login', sanitize(credentials));
+    // Server sets the refresh token as an HttpOnly cookie automatically.
+    // We only store the short-lived access token client-side.
+    const { user, accessToken } = response.data.data;
+    tokenStore.setAccess(accessToken);
     localStorage.setItem('user', JSON.stringify(user));
-    
-    return { user, token };
+    return { user, accessToken };
   },
 
   async register(userData) {
-    const response = await api.post('/auth/register', userData);
-    const { user, token } = response.data.data;
-    
-    // Store in localStorage
-    localStorage.setItem('token', token);
+    const response = await api.post('/auth/register', sanitize(userData));
+    const { user, accessToken } = response.data.data;
+    tokenStore.setAccess(accessToken);
     localStorage.setItem('user', JSON.stringify(user));
-    
-    return { user, token };
+    return { user, accessToken };
   },
 
   async getProfile() {
@@ -29,43 +34,43 @@ export const authService = {
   },
 
   async updateProfile(profileData) {
-    const response = await api.put('/auth/profile', profileData);
+    const response = await api.put('/auth/profile', sanitize(profileData));
     const user = response.data.data.user;
-    
-    // Update localStorage
     localStorage.setItem('user', JSON.stringify(user));
-    
     return user;
   },
 
   async changePassword(passwordData) {
     const response = await api.put('/auth/change-password', passwordData);
+    // Server clears the refresh cookie on password change — clear access token too
+    tokenStore.clearTokens();
     return response.data;
   },
 
-  async refreshToken() {
-    const response = await api.post('/auth/refresh');
-    const { user, token } = response.data.data;
-    
-    // Update localStorage
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return { user, token };
+  async forgotPassword(email) {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  async resetPassword(token, newPassword) {
+    const response = await api.post('/auth/reset-password', { token, newPassword });
+    return response.data;
   },
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // Fire-and-forget — clears the HttpOnly cookie on the server side.
+    // We don't await so the UI clears immediately even if the request is slow.
+    api.post('/auth/logout').catch(() => {});
+    tokenStore.clearTokens();
   },
 
   getCurrentUser() {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    const str = localStorage.getItem('user');
+    return str ? JSON.parse(str) : null;
   },
 
   getToken() {
-    return localStorage.getItem('token');
+    return tokenStore.getAccess();
   },
 
   isAuthenticated() {

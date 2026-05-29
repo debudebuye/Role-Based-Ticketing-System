@@ -6,7 +6,8 @@ import {
   validate, 
   createTicketSchema, 
   updateTicketSchema,
-  assignTicketSchema 
+  assignTicketSchema,
+  rejectTicketSchema
 } from './ticket.validation.js';
 import { ROLES, PERMISSIONS } from '../../shared/constants/roles.js';
 
@@ -248,6 +249,12 @@ router.use(authenticate);
 // Get ticket statistics
 router.get('/stats', TicketController.getTicketStats);
 
+// Get audit log for a ticket (Admin/Manager only)
+router.get('/:id/audit', 
+  requireRole(ROLES.ADMIN, ROLES.MANAGER),
+  TicketController.getTicketAuditLog
+);
+
 // Get all tickets (filtered by role)
 router.get('/', TicketController.getAllTickets);
 
@@ -390,7 +397,10 @@ router.put('/:id/assign',
 router.put('/:id/accept', TicketController.acceptTicket);
 
 // Reject ticket (Agent only - for assigned tickets)
-router.put('/:id/reject', TicketController.rejectTicket);
+router.put('/:id/reject', 
+  validate(rejectTicketSchema),
+  TicketController.rejectTicket
+);
 
 /**
  * @swagger

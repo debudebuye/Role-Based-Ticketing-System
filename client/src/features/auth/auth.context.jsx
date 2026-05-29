@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { authService } from './auth.service.js';
-import { isTokenValid } from '../../shared/utils/tokenUtils.js';
+import { isTokenValid, isTokenExpired } from '../../shared/utils/tokenUtils.js';
+import { tokenStore } from '../../shared/utils/api.js';
 
 const AuthContext = createContext();
 
@@ -57,44 +58,51 @@ const initialState = {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const expiryTimerRef = useRef(null);
 
-  // Initialize auth state from localStorage
+  // Schedule auto-logout when access token expires
+  const scheduleExpiry = (token) => {
+    if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const msUntilExpiry = payload.exp * 1000 - Date.now();
+      if (msUntilExpiry > 0) {
+        expiryTimerRef.current = setTimeout(() => {
+          authService.logout();
+          dispatch({ type: 'LOGOUT' });
+        }, msUntilExpiry);
+      }
+    } catch { /* ignore parse errors */ }
+  };
+
+  // Initialize auth state from storage
   useEffect(() => {
     try {
-      const token = authService.getToken();
-      const user = authService.getCurrentUser();
-      
+      const token = tokenStore.getAccess();
+      const user  = authService.getCurrentUser();
+
       if (token && user && isTokenValid(token)) {
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: { user, token }
-        });
+        dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
+        scheduleExpiry(token);
       } else if (token) {
-        // Token exists but is invalid - clear it
-        console.warn('Invalid or expired token found, clearing auth data');
         authService.logout();
       }
-    } catch (error) {
-      console.error('Error initializing auth state:', error);
-      // Clear invalid data
+    } catch {
       authService.logout();
     }
+
+    return () => { if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current); };
   }, []);
 
   const login = async (credentials) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       const result = await authService.login(credentials);
-      dispatch({ 
-        type: 'LOGIN_SUCCESS', 
-        payload: result 
-      });
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: result.user, token: result.accessToken } });
+      scheduleExpiry(result.accessToken);
       return result;
     } catch (error) {
-      dispatch({ 
-        type: 'LOGIN_FAILURE', 
-        payload: error.response?.data?.message || 'Login failed' 
-      });
+      dispatch({ type: 'LOGIN_FAILURE', payload: error.response?.data?.message || 'Login failed' });
       throw error;
     }
   };
@@ -103,21 +111,17 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       const result = await authService.register(userData);
-      dispatch({ 
-        type: 'LOGIN_SUCCESS', 
-        payload: result 
-      });
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: result.user, token: result.accessToken } });
+      scheduleExpiry(result.accessToken);
       return result;
     } catch (error) {
-      dispatch({ 
-        type: 'LOGIN_FAILURE', 
-        payload: error.response?.data?.message || 'Registration failed' 
-      });
+      dispatch({ type: 'LOGIN_FAILURE', payload: error.response?.data?.message || 'Registration failed' });
       throw error;
     }
   };
 
   const logout = () => {
+    if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
     authService.logout();
     dispatch({ type: 'LOGOUT' });
   };

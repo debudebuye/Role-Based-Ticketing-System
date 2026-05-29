@@ -44,7 +44,7 @@ const CustomerDashboard = () => {
           </p>
         </div>
         <Link
-          to="/tickets/new"
+          to="/app/tickets/new"
           className="btn btn-primary flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -117,7 +117,7 @@ const CustomerDashboard = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Recent Tickets</h2>
             <Link
-              to="/tickets"
+              to="/app/tickets"
               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
             >
               View all
@@ -156,7 +156,7 @@ const CustomerDashboard = () => {
                     </div>
                   </div>
                   <Link
-                    to={`/tickets/${ticket._id}`}
+                    to={`/app/tickets/${ticket._id}`}
                     className="btn btn-secondary text-sm px-3 py-1"
                   >
                     View
@@ -169,7 +169,7 @@ const CustomerDashboard = () => {
               <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No tickets yet</p>
               <Link
-                to="/tickets/new"
+                to="/app/tickets/new"
                 className="btn btn-primary mt-4"
               >
                 Create your first ticket

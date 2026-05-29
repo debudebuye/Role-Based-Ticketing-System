@@ -113,6 +113,20 @@ const ticketSchema = new mongoose.Schema({
     os: String,
     device: String,
     ipAddress: String
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true,
@@ -120,7 +134,15 @@ const ticketSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Indexes for performance
+// Exclude soft-deleted tickets from all queries by default
+ticketSchema.pre(/^find/, function(next) {
+  if (this.getFilter().isDeleted === undefined) {
+    this.where({ isDeleted: { $ne: true } });
+  }
+  next();
+});
+
+// Single-field indexes
 ticketSchema.index({ status: 1 });
 ticketSchema.index({ priority: 1 });
 ticketSchema.index({ category: 1 });
@@ -128,6 +150,12 @@ ticketSchema.index({ createdBy: 1 });
 ticketSchema.index({ assignedTo: 1 });
 ticketSchema.index({ createdAt: -1 });
 ticketSchema.index({ title: 'text', description: 'text' });
+
+// Compound indexes for common query patterns
+ticketSchema.index({ status: 1, createdAt: -1 });
+ticketSchema.index({ assignedTo: 1, status: 1 });
+ticketSchema.index({ createdBy: 1, createdAt: -1 });
+ticketSchema.index({ isDeleted: 1, status: 1 });
 
 // Virtual for comments count
 ticketSchema.virtual('commentsCount', {

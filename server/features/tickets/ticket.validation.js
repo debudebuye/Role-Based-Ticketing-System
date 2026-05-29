@@ -134,6 +134,19 @@ export const assignTicketSchema = Joi.object({
     })
 });
 
+export const rejectTicketSchema = Joi.object({
+  reason: Joi.string()
+    .trim()
+    .min(10)
+    .max(500)
+    .required()
+    .messages({
+      'string.empty': 'Rejection reason is required',
+      'string.min':   'Rejection reason must be at least 10 characters',
+      'string.max':   'Rejection reason cannot exceed 500 characters'
+    })
+});
+
 export const validate = (schema) => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req.body, {

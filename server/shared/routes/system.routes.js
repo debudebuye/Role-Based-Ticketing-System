@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { getVersionInfo } from '../middleware/version.middleware.js';
 
 const router = Router();
@@ -29,15 +30,31 @@ router.get('/version', (req, res) => {
 
 /**
  * Health check endpoint
- * GET /health (mounted at root)
+ * GET /health
+ *
+ * Returns 200 when the server and database are healthy.
+ * Returns 503 when the database is unavailable — load balancers
+ * use this to stop routing traffic to unhealthy instances.
  */
-router.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
+router.get('/', async (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  const dbHealthy = dbState === 1;
+
+  const status = {
+    status:      dbHealthy ? 'OK' : 'DEGRADED',
+    timestamp:   new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    apiVersion: 'v1'
-  });
+    apiVersion:  'v1',
+    services: {
+      database: {
+        status: dbHealthy ? 'connected' : 'disconnected',
+        state:  dbState
+      }
+    }
+  };
+
+  res.status(dbHealthy ? 200 : 503).json(status);
 });
 
 export default router;

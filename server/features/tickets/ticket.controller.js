@@ -125,14 +125,6 @@ export class TicketController {
 
   static async rejectTicket(req, res) {
     const { reason } = req.body;
-    
-    if (!reason || reason.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rejection reason is required'
-      });
-    }
-    
     const ticket = await TicketService.rejectTicket(req.params.id, reason, req.user);
     
     // Emit socket events
@@ -156,6 +148,15 @@ export class TicketController {
     res.json({
       success: true,
       data: { stats }
+    });
+  }
+
+  static async getTicketAuditLog(req, res) {
+    const logs = await TicketService.getTicketAuditLog(req.params.id, req.user);
+
+    res.json({
+      success: true,
+      data: { logs }
     });
   }
 }

@@ -1,73 +1,103 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { isTokenValid, clearInvalidTokens } from './tokenUtils.js';
+import { isTokenValid } from './tokenUtils.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// ── Fail fast if VITE_API_URL is not set in production ────────────────────────
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL && import.meta.env.PROD) {
+  throw new Error(
+    '[api] VITE_API_URL is not defined. Set it in your production environment before building.'
+  );
+}
+const BASE_URL = API_URL || 'http://localhost:5000/api/v1';
 
-// Create axios instance
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: BASE_URL,
   timeout: 10000,
+  // Required so the browser sends the HttpOnly refresh-token cookie
+  // on same-origin requests and on cross-origin requests to the API.
+  withCredentials: true
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    
-    // Check if token is valid before using it
-    if (token && isTokenValid(token)) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (token) {
-      // Token exists but is invalid/expired - clear it
-      console.warn('Token expired or invalid, clearing localStorage');
-      clearInvalidTokens();
-      
-      // If this is not a login request, redirect to login
-      if (!config.url?.includes('/auth/login') && !config.url?.includes('/auth/register')) {
-        window.location.href = '/login';
-        return Promise.reject(new Error('Token expired, please login again'));
-      }
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// ── Access token storage (in-memory only) ────────────────────────────────────
+// Storing the access token in localStorage exposes it to any JS on the page
+// (XSS). We keep it in a module-level closure instead — it lives only in
+// memory and is never readable by third-party scripts.
+// On a hard page reload the token is gone, but the silent-refresh flow
+// (HttpOnly refresh-token cookie → POST /auth/refresh) restores it
+// automatically before the first protected request fires.
+let _accessToken = null;
 
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => {
-    return response;
+export const tokenStore = {
+  getAccess:   ()    => _accessToken,
+  setAccess:   (a)   => { _accessToken = a; },
+  clearAccess: ()    => {
+    _accessToken = null;
+    localStorage.removeItem('user');
   },
-  (error) => {
-    console.error('API Error:', error);
-    
-    const message = error.response?.data?.message || 'An error occurred';
-    
-    // Handle specific error cases
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+  // Kept for backward-compat call sites
+  setTokens:   (a)   => { _accessToken = a; },
+  clearTokens: ()    => {
+    _accessToken = null;
+    localStorage.removeItem('user');
+  }
+};
+
+// ── Refresh lock (prevents parallel refresh calls) ────────────────────────────
+let _refreshing = null;
+
+const doRefresh = async () => {
+  // No token needed in the request body — the browser sends the HttpOnly
+  // cookie automatically because withCredentials: true is set above.
+  const res = await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+  const { accessToken } = res.data.data;
+  tokenStore.setAccess(accessToken);
+  return accessToken;
+};
+
+// ── Request interceptor ───────────────────────────────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = tokenStore.getAccess();
+  if (token && isTokenValid(token)) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ── Response interceptor ──────────────────────────────────────────────────────
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config;
+
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+
+      try {
+        // Serialize parallel refresh calls into one
+        if (!_refreshing) _refreshing = doRefresh().finally(() => { _refreshing = null; });
+        const newToken = await _refreshing;
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return api(original);
+      } catch {
+        tokenStore.clearTokens();
+        if (window.location.pathname !== '/login') window.location.href = '/login';
+        return Promise.reject(error);
       }
-      return Promise.reject(error);
     }
-    
+
+    const message = error.response?.data?.message || 'An error occurred';
+
     if (error.response?.status === 403) {
       toast.error('Access denied. Insufficient permissions.');
     } else if (error.response?.status >= 500) {
       toast.error('Server error. Please try again later.');
-    } else if (error.response?.status >= 400) {
+    } else if (error.response?.status >= 400 && error.response?.status !== 401) {
       toast.error(message);
-    } else if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK') {
+    } else if (error.code === 'ERR_NETWORK') {
       toast.error('Network error. Please check your connection.');
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -6,7 +6,9 @@ import {
   registerSchema, 
   loginSchema, 
   changePasswordSchema,
-  updateProfileSchema 
+  updateProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema
 } from './auth.validation.js';
 
 const router = express.Router();
@@ -147,11 +149,14 @@ const router = express.Router();
  */
 
 // Public routes
-router.post('/register', validate(registerSchema), AuthController.register);
-router.post('/login', validate(loginSchema), AuthController.login);
+router.post('/register',        validate(registerSchema),       AuthController.register);
+router.post('/login',           validate(loginSchema),          AuthController.login);
+router.post('/refresh',                                         AuthController.refreshToken);
+router.post('/forgot-password', validate(forgotPasswordSchema), AuthController.forgotPassword);
+router.post('/reset-password',  validate(resetPasswordSchema),  AuthController.resetPassword);
 
 // Protected routes
-router.use(authenticate); // All routes below require authentication
+router.use(authenticate);
 
 /**
  * @swagger
@@ -277,9 +282,9 @@ router.use(authenticate); // All routes below require authentication
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 
-router.get('/profile', AuthController.getProfile);
-router.put('/profile', validate(updateProfileSchema), AuthController.updateProfile);
-router.put('/change-password', validate(changePasswordSchema), AuthController.changePassword);
-router.post('/refresh', AuthController.refreshToken);
+router.get('/profile',          AuthController.getProfile);
+router.put('/profile',          validate(updateProfileSchema),  AuthController.updateProfile);
+router.put('/change-password',  validate(changePasswordSchema), AuthController.changePassword);
+router.post('/logout',                                          AuthController.logout);
 
 export default router;
