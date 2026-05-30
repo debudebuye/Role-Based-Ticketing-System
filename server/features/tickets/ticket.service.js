@@ -172,7 +172,7 @@ export class TicketService {
     const ticket = await Ticket.findById(ticketId);
     if (!ticket) throw new AppError('Ticket not found', 404);
 
-    const createdById = ticket.createdBy?._id || ticket.createdBy;
+    const createdById = ticket.createdBy?._id ?? ticket.createdBy;
     if (user.role !== ROLES.ADMIN && createdById.toString() !== user._id.toString()) {
       throw new AppError('Access denied', 403);
     }
@@ -328,6 +328,9 @@ export class TicketService {
 
   // ─── Permission helpers ──────────────────────────────────────────────────────
   static canUserAccessTicket(ticket, user) {
+    // assignedTo may be a raw ObjectId or a populated User document
+    const assignedToId = ticket.assignedTo?._id ?? ticket.assignedTo;
+
     switch (user.role) {
       case ROLES.ADMIN:
       case ROLES.MANAGER:
@@ -335,11 +338,11 @@ export class TicketService {
       case ROLES.AGENT:
         // Agents can view their assigned tickets or unassigned open tickets
         return (
-          ticket.assignedTo?.toString() === user._id.toString() ||
+          assignedToId?.toString() === user._id.toString() ||
           (!ticket.assignedTo && ticket.status === TICKET_STATUS.OPEN)
         );
       case ROLES.CUSTOMER: {
-        const createdById = ticket.createdBy?._id || ticket.createdBy;
+        const createdById = ticket.createdBy?._id ?? ticket.createdBy;
         return createdById.toString() === user._id.toString();
       }
       default:
@@ -348,6 +351,9 @@ export class TicketService {
   }
 
   static canUserUpdateTicket(ticket, user, updateData) {
+    // assignedTo may be a raw ObjectId or a populated User document
+    const assignedToId = ticket.assignedTo?._id ?? ticket.assignedTo;
+
     switch (user.role) {
       case ROLES.ADMIN:
       case ROLES.MANAGER:
@@ -356,14 +362,14 @@ export class TicketService {
         const allowedFields  = ['status'];
         const updateFields   = Object.keys(updateData);
         return (
-          ticket.assignedTo?.toString() === user._id.toString() &&
+          assignedToId?.toString() === user._id.toString() &&
           ticket.acceptanceStatus === 'accepted' &&
           updateFields.every(f => allowedFields.includes(f))
         );
       }
       case ROLES.CUSTOMER: {
         const customerAllowed = ['title', 'description', 'priority'];
-        const createdById     = ticket.createdBy?._id || ticket.createdBy;
+        const createdById     = ticket.createdBy?._id ?? ticket.createdBy;
         return (
           createdById.toString() === user._id.toString() &&
           ticket.status === TICKET_STATUS.OPEN &&

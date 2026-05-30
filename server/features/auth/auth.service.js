@@ -87,7 +87,14 @@ export class AuthService {
 
     // Validate that this is the current refresh token (prevents reuse of superseded tokens)
     const providedHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    if (user.refreshTokenHash && user.refreshTokenHash !== providedHash) {
+
+    // If refreshTokenHash is null, all sessions have been invalidated (logout /
+    // password change / token-theft response).  Reject immediately.
+    if (!user.refreshTokenHash) {
+      throw new AppError('Session has been invalidated. Please log in again.', 401);
+    }
+
+    if (user.refreshTokenHash !== providedHash) {
       // Token reuse detected — possible theft. Invalidate all sessions.
       await User.findByIdAndUpdate(user._id, { refreshTokenHash: null }, { validateBeforeSave: false });
       logger.warn('Refresh token reuse detected — all sessions invalidated', { userId: user._id });

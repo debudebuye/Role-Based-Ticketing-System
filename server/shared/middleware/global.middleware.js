@@ -69,6 +69,10 @@ export const setupSecurity = (app) => {
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 export const setupRateLimit = (app) => {
+  // Skip rate limiting in test environment — tests run in-process and share
+  // the limiter's in-memory store, causing spurious 429s across test cases.
+  if (process.env.NODE_ENV === 'test') return;
+
   // Strict limiter for auth endpoints (5 attempts / 15 min)
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,

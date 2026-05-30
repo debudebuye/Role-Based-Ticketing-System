@@ -1,0 +1,35 @@
+version: "3.9"
+
+# ── Development overrides ─────────────────────────────────────────────────────
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Differences from production:
+#  - Server runs with nodemon (hot reload)
+#  - Source code is bind-mounted so changes reflect immediately
+#  - Client runs the Vite dev server instead of nginx
+#  - NODE_ENV=development (enables Swagger UI, verbose errors)
+
+services:
+  server:
+    build:
+      target: deps          # only install deps, don't copy source
+    command: ["npx", "nodemon", "server.js"]
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      - ./server:/app
+      - /app/node_modules   # anonymous volume so host node_modules don't override
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    command: ["npm", "run", "dev", "--", "--host"]
+    environment:
+      VITE_API_URL: http://localhost:5000/api/v1
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
