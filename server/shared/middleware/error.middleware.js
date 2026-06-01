@@ -1,4 +1,5 @@
 import logger from '../utils/logger.js';
+import { SystemError } from '../models/system-error.model.js';
 
 export const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
@@ -41,6 +42,20 @@ export const errorHandler = (err, req, res, next) => {
       url:    req.originalUrl,
       ip:     req.ip
     });
+
+    // Persist to DB for admin error feed (fire-and-forget — never block the response)
+    SystemError.create({
+      message,
+      stack:      err.stack,
+      statusCode,
+      method:     req.method,
+      url:        req.originalUrl,
+      userId:     req.user?._id   || null,
+      userEmail:  req.user?.email || null,
+      ip:         req.ip,
+      userAgent:  req.get('user-agent'),
+    }).catch(() => { /* swallow — logging failure must never crash the server */ });
+
   } else {
     logger.warn('Client error', {
       message,

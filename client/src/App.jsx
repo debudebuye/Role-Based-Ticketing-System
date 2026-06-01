@@ -24,6 +24,7 @@ import TicketDetailPage from './features/tickets/pages/TicketDetailPage.jsx';
 import CreateTicketPage from './features/tickets/pages/CreateTicketPage.jsx';
 import UserListPage from './features/users/pages/UserListPage.jsx';
 import SettingsPage from './features/settings/pages/SettingsPage.jsx';
+import MonitoringPage from './features/monitoring/MonitoringPage.jsx';
 
 import { ROLES } from './shared/utils/constants.js';
 
@@ -59,6 +60,18 @@ function App() {
             
             {/* Settings route */}
             <Route path="settings" element={<SettingsPage />} />
+
+            {/* Monitoring — admin only */}
+            <Route
+              path="monitoring"
+              element={
+                <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                  <ErrorBoundary key="monitoring">
+                    <MonitoringPage />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
             
             {/* Default redirect */}
             <Route index element={<Navigate to="dashboard" replace />} />

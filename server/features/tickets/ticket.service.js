@@ -173,8 +173,23 @@ export class TicketService {
     if (!ticket) throw new AppError('Ticket not found', 404);
 
     const createdById = ticket.createdBy?._id ?? ticket.createdBy;
-    if (user.role !== ROLES.ADMIN && createdById.toString() !== user._id.toString()) {
+    const isOwner     = createdById.toString() === user._id.toString();
+    const isAdmin     = user.role === ROLES.ADMIN;
+
+    if (!isAdmin && !isOwner) {
       throw new AppError('Access denied', 403);
+    }
+
+    // Customers can only delete tickets that haven't been picked up yet.
+    // Once an agent is working on it, only an admin can delete it.
+    if (!isAdmin && isOwner) {
+      const nonDeletableStatuses = [TICKET_STATUS.IN_PROGRESS, TICKET_STATUS.RESOLVED, TICKET_STATUS.CLOSED];
+      if (nonDeletableStatuses.includes(ticket.status)) {
+        throw new AppError(
+          `Cannot delete a ticket that is ${ticket.status.replace('_', ' ')}. Contact an administrator if needed.`,
+          403
+        );
+      }
     }
 
     ticket.isDeleted  = true;

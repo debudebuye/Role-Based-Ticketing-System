@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, MessageCircle, Clock, User, Send, CheckCircle, X } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Clock, User, Send, CheckCircle, X, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { ticketService } from '../ticket.service.js';
@@ -109,6 +109,24 @@ const TicketDetailPage = () => {
       toast.error(error.response?.data?.message || 'Failed to reject ticket');
     }
   });
+
+  // Delete ticket mutation
+  const deleteTicketMutation = useMutation({
+    mutationFn: () => ticketService.deleteTicket(id),
+    onSuccess: () => {
+      toast.success('Ticket deleted successfully.');
+      navigate('/app/tickets');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to delete ticket');
+    }
+  });
+
+  const handleDeleteTicket = () => {
+    if (window.confirm('Are you sure you want to delete this ticket? This cannot be undone.')) {
+      deleteTicketMutation.mutate();
+    }
+  };
 
   const onSubmitComment = (data) => {
     createCommentMutation.mutate(data);
@@ -569,6 +587,14 @@ const TicketDetailPage = () => {
                     >
                       Assign Ticket
                     </button>
+                    <button
+                      onClick={handleDeleteTicket}
+                      disabled={deleteTicketMutation.isPending}
+                      className="btn w-full flex items-center justify-center bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteTicketMutation.isPending ? 'Deleting...' : 'Delete Ticket'}
+                    </button>
                   </>
                 )}
                 
@@ -665,6 +691,18 @@ const TicketDetailPage = () => {
                         className="btn btn-secondary w-full"
                       >
                         Update Ticket
+                      </button>
+                    )}
+
+                    {/* Delete — only for own open tickets */}
+                    {ticket.createdBy?._id === user._id && ticket.status === 'open' && (
+                      <button
+                        onClick={handleDeleteTicket}
+                        disabled={deleteTicketMutation.isPending}
+                        className="btn w-full flex items-center justify-center bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {deleteTicketMutation.isPending ? 'Deleting...' : 'Delete Ticket'}
                       </button>
                     )}
                     

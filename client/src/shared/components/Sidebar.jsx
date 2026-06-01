@@ -6,7 +6,8 @@ import {
   Users, 
   Plus,
   BarChart3,
-  Settings
+  Settings,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/auth.context.jsx';
 import { ROLES } from '../utils/constants.js';
@@ -16,48 +17,26 @@ const Sidebar = () => {
 
   const getNavigationItems = () => {
     const baseItems = [
-      {
-        name: 'Dashboard',
-        href: '/app/dashboard',
-        icon: LayoutDashboard
-      },
-      {
-        name: 'Tickets',
-        href: '/app/tickets',
-        icon: Ticket
-      }
+      { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
+      { name: 'Tickets',   href: '/app/tickets',   icon: Ticket          },
     ];
 
-    // Add role-specific items
     if (user?.role === ROLES.CUSTOMER) {
-      baseItems.push({
-        name: 'Create Ticket',
-        href: '/app/tickets/new',
-        icon: Plus
-      });
+      baseItems.push({ name: 'Create Ticket', href: '/app/tickets/new', icon: Plus });
     }
 
     if ([ROLES.ADMIN, ROLES.MANAGER].includes(user?.role)) {
       baseItems.push(
-        {
-          name: 'Users',
-          href: '/app/users',
-          icon: Users
-        },
-        {
-          name: 'Reports',
-          href: '/app/reports',
-          icon: BarChart3
-        }
+        { name: 'Users',   href: '/app/users',   icon: Users    },
+        { name: 'Reports', href: '/app/reports', icon: BarChart3 }
       );
     }
 
     if (user?.role === ROLES.ADMIN) {
-      baseItems.push({
-        name: 'Settings',
-        href: '/app/settings',
-        icon: Settings
-      });
+      baseItems.push(
+        { name: 'Monitoring', href: '/app/monitoring', icon: Activity },
+        { name: 'Settings',   href: '/app/settings',   icon: Settings }
+      );
     }
 
     return baseItems;

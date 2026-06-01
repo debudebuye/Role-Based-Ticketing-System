@@ -12,15 +12,17 @@ import authRoutes from '../../features/auth/auth.routes.js';
 import userRoutes from '../../features/users/user.routes.js';
 import ticketRoutes from '../../features/tickets/ticket.routes.js';
 import commentRoutes from '../../features/comments/comment.routes.js';
+import monitoringRoutes from '../../features/monitoring/monitoring.routes.js';
 
 /**
  * Setup API v1 routes
  */
 export const setupV1Routes = (app) => {
-  app.use('/api/v1/auth', authRoutes);
-  app.use('/api/v1/users', userRoutes);
-  app.use('/api/v1/tickets', ticketRoutes);
-  app.use('/api/v1/comments', commentRoutes);
+  app.use('/api/v1/auth',       authRoutes);
+  app.use('/api/v1/users',      userRoutes);
+  app.use('/api/v1/tickets',    ticketRoutes);
+  app.use('/api/v1/comments',   commentRoutes);
+  app.use('/api/v1/monitoring', monitoringRoutes);
   logger.info('API v1 routes configured');
 };
 

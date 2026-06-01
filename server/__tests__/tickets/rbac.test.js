@@ -149,11 +149,36 @@ describe('CUSTOMER role', () => {
     const createRes = await createTicketAs(customerToken);
     const ticketId  = createRes.body.data.ticket._id;
 
+    // Can delete while still open and unassigned
     const res = await request(app)
       .delete(`/api/v1/tickets/${ticketId}`)
       .set(bearer(customerToken));
 
     expect(res.status).toBe(200);
+  });
+
+  it('cannot delete their own ticket once it is in_progress', async () => {
+    const { user: agentUser, accessToken: agentToken } = await loginPrivilegedUser(app, 'agent');
+    const { accessToken: managerToken } = await loginPrivilegedUser(app, 'manager');
+
+    const createRes = await createTicketAs(customerToken);
+    const ticketId  = createRes.body.data.ticket._id;
+
+    // Assign → accept → now in_progress
+    await request(app)
+      .put(`/api/v1/tickets/${ticketId}/assign`)
+      .set(bearer(managerToken))
+      .send({ assignedTo: agentUser._id.toString() });
+
+    await request(app)
+      .put(`/api/v1/tickets/${ticketId}/accept`)
+      .set(bearer(agentToken));
+
+    const res = await request(app)
+      .delete(`/api/v1/tickets/${ticketId}`)
+      .set(bearer(customerToken));
+
+    expect(res.status).toBe(403);
   });
 });
 
