@@ -352,7 +352,7 @@ const AgentTicketList = () => {
                       {!ticket.assignedTo && (
                         <>
                           <Link
-                            to={`/tickets/${ticket._id}`}
+                            to={`/app/tickets/${ticket._id}`}
                             className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
                             View Details
@@ -383,7 +383,7 @@ const AgentTicketList = () => {
                             {rejectTicketMutation.isPending ? 'Rejecting...' : 'Reject'}
                           </button>
                           <Link
-                            to={`/tickets/${ticket._id}`}
+                            to={`/app/tickets/${ticket._id}`}
                             className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
                             Review Details
@@ -405,7 +405,7 @@ const AgentTicketList = () => {
                             </button>
                           )}
                           <Link
-                            to={`/tickets/${ticket._id}`}
+                            to={`/app/tickets/${ticket._id}`}
                             className="btn btn-primary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
                             Work on it
@@ -416,7 +416,7 @@ const AgentTicketList = () => {
                       {/* Assigned to current user - rejected */}
                       {ticket.assignedTo?._id === user._id && ticket.acceptanceStatus === 'rejected' && (
                         <Link
-                          to={`/tickets/${ticket._id}`}
+                          to={`/app/tickets/${ticket._id}`}
                           className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                         >
                           View Details
@@ -427,7 +427,7 @@ const AgentTicketList = () => {
                       {ticket.assignedTo && ticket.assignedTo._id !== user._id && (
                         <>
                           <Link
-                            to={`/tickets/${ticket._id}`}
+                            to={`/app/tickets/${ticket._id}`}
                             className="btn btn-secondary text-sm px-4 py-2 text-center min-w-[120px]"
                           >
                             View Details

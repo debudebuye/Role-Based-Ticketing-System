@@ -84,12 +84,17 @@ export const setupRateLimit = (app) => {
   });
 
   // General API limiter
+  // Default: 500 req / 15 min per IP — enough for a SPA that fires several
+  // requests per page load plus React Query background refetches.
+  // Override with RATE_LIMIT_MAX in .env (e.g. set to 0 to disable in dev).
+  const generalMax = parseInt(process.env.RATE_LIMIT_MAX) || 500;
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: generalMax,
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: () => generalMax === 0   // RATE_LIMIT_MAX=0 disables the limiter entirely
   });
 
   app.use('/api/v1/auth/login',           authLimiter);

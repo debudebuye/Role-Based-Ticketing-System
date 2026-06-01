@@ -40,7 +40,13 @@ const ManagerTicketList = () => {
 
   const { data: ticketsData, isLoading, error } = useQuery({
     queryKey: ['manager-tickets', activeTab, { ...filters, search: searchTerm }],
-    queryFn: () => ticketService.getAllTickets(getTicketFilters()),
+    queryFn: () => ticketService.getAllTickets({
+      ...getTicketFilters(),
+      // 'unassigned' is a UI-only value — the server filters by ObjectId, not string
+      assignedTo: getTicketFilters().assignedTo === 'unassigned'
+        ? undefined
+        : getTicketFilters().assignedTo,
+    }),
     refetchInterval: 30000
   });
 
@@ -107,14 +113,14 @@ const ManagerTicketList = () => {
         </div>
         <div className="flex items-center space-x-3">
           <Link
-            to="/users"
+            to="/app/users"
             className="btn btn-secondary flex items-center"
           >
             <Users className="h-4 w-4 mr-2" />
             Team
           </Link>
           <Link
-            to="/reports"
+            to="/app/reports"
             className="btn btn-secondary flex items-center"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -306,7 +312,7 @@ const ManagerTicketList = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <Link 
-                        to={`/tickets/${ticket._id}`}
+                        to={`/app/tickets/${ticket._id}`}
                         className="text-lg font-medium text-gray-900 hover:text-primary-600"
                       >
                         {ticket.title}
@@ -353,7 +359,7 @@ const ManagerTicketList = () => {
                         </select>
                       )}
                       <Link
-                        to={`/tickets/${ticket._id}`}
+                        to={`/app/tickets/${ticket._id}`}
                         className="btn btn-primary text-sm px-3 py-1"
                       >
                         Manage

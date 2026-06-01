@@ -26,7 +26,9 @@ const AdminTicketList = () => {
   const { data: ticketsData, isLoading, error } = useQuery({
     queryKey: ['admin-tickets', { ...filters, search: searchTerm }],
     queryFn: () => ticketService.getAllTickets({ 
-      ...filters, 
+      ...filters,
+      // 'unassigned' is a UI-only value — convert to the param the server understands
+      assignedTo: filters.assignedTo === 'unassigned' ? undefined : filters.assignedTo,
       search: searchTerm || undefined 
     }),
     refetchInterval: 30000
@@ -82,14 +84,14 @@ const AdminTicketList = () => {
         </div>
         <div className="flex items-center space-x-3">
           <Link
-            to="/users"
+            to="/app/users"
             className="btn btn-secondary flex items-center"
           >
             <Users className="h-4 w-4 mr-2" />
             Manage Users
           </Link>
           <Link
-            to="/settings"
+            to="/app/settings"
             className="btn btn-secondary flex items-center"
           >
             <Settings className="h-4 w-4 mr-2" />
@@ -205,7 +207,7 @@ const AdminTicketList = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <Link 
-                        to={`/tickets/${ticket._id}`}
+                        to={`/app/tickets/${ticket._id}`}
                         className="text-lg font-medium text-gray-900 hover:text-primary-600"
                       >
                         {ticket.title}
@@ -252,7 +254,7 @@ const AdminTicketList = () => {
                         </select>
                       )}
                       <Link
-                        to={`/tickets/${ticket._id}`}
+                        to={`/app/tickets/${ticket._id}`}
                         className="btn btn-primary text-sm px-3 py-1"
                       >
                         Manage

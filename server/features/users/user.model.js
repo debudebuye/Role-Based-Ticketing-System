@@ -81,8 +81,8 @@ const userSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON:   { virtuals: true, versionKey: false },
+  toObject: { virtuals: true, versionKey: false }
 });
 
 // Index for performance (email index is already created by unique: true)
@@ -140,7 +140,17 @@ userSchema.methods.isLocked = function() {
 // Get user without sensitive data
 userSchema.methods.toSafeObject = function() {
   const userObject = this.toObject();
-  delete userObject.password;
+  // Strip password and all internal security/tracking fields — these must
+  // never be sent to the client regardless of how the document was fetched.
+  const INTERNAL_FIELDS = [
+    'password',
+    'failedLoginAttempts',
+    'lockUntil',
+    'passwordResetToken',
+    'passwordResetExpiry',
+    'refreshTokenHash',
+  ];
+  INTERNAL_FIELDS.forEach((f) => delete userObject[f]);
   return userObject;
 };
 

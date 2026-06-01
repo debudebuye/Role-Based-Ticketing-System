@@ -11,12 +11,9 @@ export const ticketService = {
         }
       });
       
-      console.log('Fetching tickets with params:', params);
       const response = await api.get(`/tickets?${queryParams.toString()}`);
-      console.log('Tickets response:', response.data);
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching tickets:', error);
       throw error;
     }
   },
@@ -67,14 +64,7 @@ export const ticketService = {
   },
 
   async getTicketStats() {
-    try {
-      console.log('Fetching ticket stats...');
-      const response = await api.get('/tickets/stats');
-      console.log('Stats response:', response.data);
-      return response.data.data.stats;
-    } catch (error) {
-      console.error('Error fetching ticket stats:', error);
-      throw error;
-    }
+    const response = await api.get('/tickets/stats');
+    return response.data.data.stats;
   }
 };
