@@ -1,4 +1,5 @@
 import { AuthService } from './auth.service.js';
+import { SystemConfig } from '../../shared/models/system-config.model.js';
 
 // ── Cookie config ─────────────────────────────────────────────────────────────
 // The refresh token is stored in an HttpOnly, Secure, SameSite=Strict cookie.
@@ -32,6 +33,14 @@ const sendTokens = (res, status, message, { user, accessToken, refreshToken }) =
 
 export class AuthController {
   static async register(req, res) {
+    // Honour the admin-controlled allowRegistration config
+    const config = await SystemConfig.getConfig();
+    if (!config.allowRegistration) {
+      return res.status(403).json({
+        success: false,
+        message: 'New user registration is currently disabled. Please contact an administrator.',
+      });
+    }
     const result = await AuthService.register(req.body);
     sendTokens(res, 201, 'User registered successfully', result);
   }

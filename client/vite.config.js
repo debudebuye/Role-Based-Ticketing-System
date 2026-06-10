@@ -14,6 +14,22 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: process.env.NODE_ENV !== 'production'
+    sourcemap: process.env.NODE_ENV !== 'production',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Data fetching & state
+          'vendor-query': ['@tanstack/react-query'],
+          // UI utilities
+          'vendor-ui':    ['lucide-react', 'react-hot-toast', 'clsx'],
+          // Form & dates
+          'vendor-form':  ['react-hook-form', 'date-fns'],
+          // Networking & security
+          'vendor-net':   ['axios', 'socket.io-client', 'dompurify'],
+        }
+      }
+    }
   }
 })

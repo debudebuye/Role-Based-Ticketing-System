@@ -38,5 +38,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:5000/health || exit 1
 
-# Start the server
-CMD ["node", "server.js"]
+# Run env validation then start the server.
+# Using shell form so we get "&&" short-circuit (exits on check failure).
+CMD node check-env.js && node server.js

@@ -15,6 +15,18 @@ class EmailService {
       return;
     }
 
+    // In test environment, use a no-op mock — no network calls during tests.
+    if (process.env.NODE_ENV === 'test') {
+      this.transporter = {
+        sendMail: async (mailOptions) => {
+          return { messageId: 'test-mock-' + Date.now() };
+        }
+      };
+      this.emailMode   = 'mock';
+      this.initialized = true;
+      return;
+    }
+
     try {
       const hasEmailCredentials = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
 

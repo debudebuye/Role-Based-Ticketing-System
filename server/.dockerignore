@@ -1,0 +1,35 @@
+# ── server/.dockerignore ──────────────────────────────────────────────────────
+# Files excluded from the Docker build context.
+# This is a security boundary — secrets listed here are NEVER sent to the
+# Docker daemon, even transiently (unlike RUN rm ... in the Dockerfile).
+
+# Secrets — never send these to the build context
+.env
+.env.*
+!.env.example
+
+# Dev dependencies and local modules
+node_modules/
+
+# Test artifacts
+__tests__/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Dev tooling
+.eslintcache
+.nodemon*
+*.swp
+*.swo
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore

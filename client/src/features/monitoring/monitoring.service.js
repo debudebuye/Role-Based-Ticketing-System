@@ -38,4 +38,19 @@ export const monitoringService = {
     const res = await api.get('/monitoring/stats');
     return res.data.data;
   },
+
+  async getAgentPerformance(period = '30d') {
+    const res = await api.get(`/monitoring/agent-performance?period=${period}`);
+    return res.data.data;
+  },
+
+  async getSystemConfig() {
+    const res = await api.get('/monitoring/config');
+    return res.data.data.config;
+  },
+
+  async updateSystemConfig(data) {
+    const res = await api.put('/monitoring/config', data);
+    return res.data.data.config;
+  },
 };

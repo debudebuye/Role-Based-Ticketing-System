@@ -45,103 +45,190 @@ npm run dev
 
 ## 🏭 Production Deployment
 
-### Backend Deployment Options
+### Option 1: Docker Compose (recommended)
 
-#### Option 1: Heroku
+This is the fully supported production path. Everything runs in containers —
+MongoDB, the Node API server, and the React app served by nginx.
+
+#### Step 1 — Configure environment
+
 ```bash
-# In server directory
-heroku create your-app-name-api
-heroku config:set NODE_ENV=production
-heroku config:set MONGODB_URI=your-mongodb-atlas-uri
-heroku config:set JWT_SECRET=your-super-secure-jwt-secret
-heroku config:set CORS_ORIGIN=https://your-frontend-domain.com
-git subtree push --prefix server heroku main
+# Copy the production template and fill in ALL values
+cp .env.production.example .env
 ```
 
-#### Option 2: Railway
+Key values to set in `.env`:
+
+| Variable | What to set |
+|---|---|
+| `MONGO_ROOT_PASSWORD` | Strong random password (20+ chars) |
+| `JWT_SECRET` | 64-char random hex — `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `JWT_REFRESH_SECRET` | Different 64-char random hex |
+| `CORS_ORIGIN` | `https://yourdomain.com` |
+| `CLIENT_URL` | `https://yourdomain.com` |
+| `VITE_API_URL` | `https://yourdomain.com/api/v1` |
+| `EMAIL_FROM` | `noreply@yourdomain.com` |
+| `EMAIL_USER` | Gmail address |
+| `EMAIL_PASSWORD` | Gmail App Password (not account password) |
+| `CERT_PATH` | Path to TLS fullchain.pem on the host |
+| `KEY_PATH` | Path to TLS privkey.pem on the host |
+
+#### Step 2 — Obtain TLS certificates (Let's Encrypt)
+
 ```bash
-# In server directory
-railway login
-railway new
-railway add
-railway deploy
+# Install certbot on your server
+sudo apt install certbot
+
+# Stop any service on port 80 first, then:
+sudo certbot certonly --standalone -d yourdomain.com
+
+# Certs will be at:
+#   /etc/letsencrypt/live/yourdomain.com/fullchain.pem
+#   /etc/letsencrypt/live/yourdomain.com/privkey.pem
 ```
 
-#### Option 3: DigitalOcean App Platform
-1. Connect your GitHub repository
-2. Select the `server` folder as root
-3. Set environment variables in the dashboard
-4. Deploy
+> If SSL is terminated upstream (Cloudflare, AWS ALB), skip this step and
+> remove the HTTPS server block from `client/nginx.conf` — nginx only needs
+> to serve HTTP in that case.
 
-### Frontend Deployment Options
+#### Step 3 — Deploy
 
-#### Option 1: Netlify
 ```bash
-# In client directory
-npm run build
-# Upload dist folder to Netlify or connect GitHub repo
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-#### Option 2: Vercel
+#### Step 4 — Create the first admin user
+
 ```bash
-# In client directory
-vercel --prod
+# Register via the app, then promote via the script:
+docker exec ticket-server node scripts/promote-admin.js your@email.com
 ```
 
-#### Option 3: AWS S3 + CloudFront
+#### Updating
+
 ```bash
-# In client directory
-npm run build
-aws s3 sync dist/ s3://your-bucket-name
-# Configure CloudFront distribution
+git pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-### Database Setup (MongoDB Atlas)
+---
 
-1. Create MongoDB Atlas account
-2. Create new cluster
-3. Create database user
-4. Whitelist IP addresses (0.0.0.0/0 for development)
-5. Get connection string
-6. Update MONGODB_URI in environment variables
+### Option 2: VPS with PM2 (no Docker)
 
-## 🔧 Environment Variables
+Suitable for a single VPS where you want direct control.
 
-### Backend (.env)
+```bash
+# On the server
+git clone <repo> && cd ticket-management-system
+
+# Install dependencies
+cd server && npm ci --omit=dev
+
+# Set env vars (use a real .env or export them)
+cp .env.production.example .env
+# Edit .env
+
+# Start with PM2 (defaults to 1 instance — safe for Socket.IO)
+pm2 start pm2.config.cjs
+pm2 save
+pm2 startup   # follow the printed command to enable on boot
+```
+
+For the frontend, build locally and serve via nginx or upload to a CDN:
+
+```bash
+cd client
+VITE_API_URL=https://yourdomain.com/api/v1 npm run build
+# Upload dist/ to your server or CDN
+```
+
+See [nginx-sticky.md](./nginx-sticky.md) if you want to run multiple PM2
+workers.
+
+---
+
+### Option 3: Managed platforms
+
+| Service | Notes |
+|---|---|
+| **Railway / Render** | Connect GitHub repo, set env vars in dashboard, deploy `server/` as root |
+| **Heroku** | `git subtree push --prefix server heroku main` — set config vars via `heroku config:set` |
+| **Vercel / Netlify** | Frontend only — set `VITE_API_URL` as build env var, deploy `client/` |
+| **MongoDB Atlas** | Use instead of the Docker mongo container — replace `MONGODB_URI` with the Atlas connection string |
+
+---
+
+## 🔧 Environment Variables Reference
+
+See `.env.production.example` in the project root for a fully commented
+production template.
+
+### Quick reference
+
 ```env
+# Server
 NODE_ENV=production
 PORT=5000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ticket-system
-JWT_SECRET=your-super-secure-jwt-secret-at-least-32-characters-long
-JWT_EXPIRE=7d
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/ticket-system
+
+JWT_SECRET=<64-char-hex>
+JWT_REFRESH_SECRET=<different-64-char-hex>
+JWT_EXPIRE=15m
+JWT_REFRESH_EXPIRE=7d
+
 BCRYPT_ROUNDS=12
-CORS_ORIGIN=https://your-frontend-domain.com
+RATE_LIMIT_MAX=500
+TRUST_PROXY=1
+
+CORS_ORIGIN=https://yourdomain.com
+CLIENT_URL=https://yourdomain.com
+
+EMAIL_FROM=noreply@yourdomain.com
+EMAIL_SERVICE=gmail
+EMAIL_USER=you@gmail.com
+EMAIL_PASSWORD=<app-password>
 ```
 
-### Frontend (.env)
 ```env
-VITE_API_URL=https://your-backend-domain.com/api
-VITE_SOCKET_URL=https://your-backend-domain.com
+# Client (baked in at build time)
+VITE_API_URL=https://yourdomain.com/api/v1
+VITE_SOCKET_URL=https://yourdomain.com
 ```
 
-## 🔒 Security Checklist
+## 🔒 Production Security Checklist
 
-### Backend Security
-- [ ] Strong JWT secret (32+ characters)
-- [ ] HTTPS enabled
-- [ ] CORS properly configured
-- [ ] Rate limiting enabled
-- [ ] Input validation on all endpoints
-- [ ] MongoDB connection secured
-- [ ] Environment variables secured
-- [ ] Error messages don't expose sensitive data
+Before going live, verify every item:
 
-### Frontend Security
-- [ ] HTTPS enabled
-- [ ] API URLs use HTTPS
-- [ ] No sensitive data in localStorage
-- [ ] XSS protection enabled
-- [ ] Content Security Policy configured
+### Secrets
+- [ ] `JWT_SECRET` is a 64-char random hex (not a placeholder or dictionary word)
+- [ ] `JWT_REFRESH_SECRET` is a **different** 64-char random hex
+- [ ] `MONGO_ROOT_PASSWORD` is 20+ random characters
+- [ ] `EMAIL_PASSWORD` is a Gmail App Password, not your account password
+- [ ] `.env` is in `.gitignore` and not committed to the repository
+
+### Network
+- [ ] HTTPS is enabled (TLS cert mounted, nginx HTTPS block active)
+- [ ] `CORS_ORIGIN` is set to your exact frontend domain (not `*`, not `localhost`)
+- [ ] MongoDB port (27017) is **not** exposed to the internet (handled by `docker-compose.prod.yml`)
+- [ ] `TRUST_PROXY=1` is set when running behind nginx or a load balancer
+- [ ] `RATE_LIMIT_MAX=500` (not 0) in production
+
+### Application
+- [ ] `NODE_ENV=production` (disables Swagger UI and verbose error messages)
+- [ ] `EMAIL_FROM` is a real domain address (not `noreply@localhost`)
+- [ ] `CLIENT_URL` is your production frontend URL (used in password-reset email links)
+- [ ] `LOG_LEVEL=info` (not `debug` — debug logs can expose sensitive data)
+
+### Database
+- [ ] MongoDB Atlas or a replica set is used for production (not a single Docker container)
+- [ ] Database user has least-privilege access
+- [ ] Automated backups are configured
+
+### Post-deploy
+- [ ] Run the test suite: `cd server && npm test`
+- [ ] Smoke test: register a user, create a ticket, test password reset email
+- [ ] Check `/health` endpoint returns 200
+- [ ] Verify Socket.IO connects (open browser dev tools → Network → WS)
 
 ## 📊 Monitoring & Logging
 

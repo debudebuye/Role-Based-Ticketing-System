@@ -1,0 +1,26 @@
+# ── client/.dockerignore ──────────────────────────────────────────────────────
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies — reinstalled during build
+node_modules/
+
+# Build output — rebuilt during Docker build
+dist/
+build/
+
+# Dev tooling
+.eslintcache
+*.swp
+*.swo
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore

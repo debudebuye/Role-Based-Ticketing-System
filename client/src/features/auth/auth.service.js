@@ -58,10 +58,14 @@ export const authService = {
   },
 
   logout() {
-    // Fire-and-forget — clears the HttpOnly cookie on the server side.
-    // We don't await so the UI clears immediately even if the request is slow.
+    // Send the logout request BEFORE clearing the token so the Authorization
+    // header is still present when the server receives it.
+    // Fire-and-forget — clears the HttpOnly cookie server-side.
     api.post('/auth/logout').catch(() => {});
+    // Clear client-side tokens after scheduling the request (same tick is fine —
+    // axios queues the request before the token is read from memory).
     tokenStore.clearTokens();
+    localStorage.removeItem('user');
   },
 
   getCurrentUser() {

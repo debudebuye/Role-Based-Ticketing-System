@@ -1,6 +1,7 @@
 /**
  * Admin Monitoring Routes
- * All endpoints require authentication + admin role.
+ * All endpoints require authentication + admin role,
+ * except /agent-performance which is admin + manager.
  */
 
 import { Router } from 'express';
@@ -9,19 +10,22 @@ import os from 'os';
 import { authenticate } from '../../shared/middleware/auth.middleware.js';
 import { requireRole } from '../../shared/middleware/role.middleware.js';
 import { SystemError } from '../../shared/models/system-error.model.js';
+import { SystemConfig } from '../../shared/models/system-config.model.js';
 import { AuditLog } from '../tickets/audit.model.js';
 import { User } from '../users/user.model.js';
 import { Ticket } from '../tickets/ticket.model.js';
 import { ROLES } from '../../shared/constants/roles.js';
+import Joi from 'joi';
 
 const router = Router();
 
-// All monitoring routes require admin
+// All monitoring routes require authentication.
+// Role checks are applied per-route below so that /agent-performance
+// can be accessed by both admin and manager (all others are admin-only).
 router.use(authenticate);
-router.use(requireRole(ROLES.ADMIN));
 
-// ── System health ─────────────────────────────────────────────────────────────
-router.get('/health', async (req, res) => {
+// ── System health (Admin only) ────────────────────────────────────────────────
+router.get('/health', requireRole(ROLES.ADMIN), async (req, res) => {
   const dbState   = mongoose.connection.readyState;
   const dbHealthy = dbState === 1;
   const memUsage  = process.memoryUsage();
@@ -60,8 +64,8 @@ router.get('/health', async (req, res) => {
   });
 });
 
-// ── Active users (via Socket.IO) ──────────────────────────────────────────────
-router.get('/active-users', (req, res) => {
+// ── Active users (Admin only) ─────────────────────────────────────────────────
+router.get('/active-users', requireRole(ROLES.ADMIN), (req, res) => {
   const io = req.io;
   const connected = io?.getConnectedUsers?.() ?? [];
 
@@ -79,8 +83,8 @@ router.get('/active-users', (req, res) => {
   });
 });
 
-// ── Error feed ────────────────────────────────────────────────────────────────
-router.get('/errors', async (req, res) => {
+// ── Error feed (Admin only) ───────────────────────────────────────────────────
+router.get('/errors', requireRole(ROLES.ADMIN), async (req, res) => {
   const { page = 1, limit = 20, resolved, statusCode } = req.query;
   const safePage  = Math.max(1, parseInt(page)  || 1);
   const safeLimit = Math.min(100, parseInt(limit) || 20);
@@ -108,8 +112,8 @@ router.get('/errors', async (req, res) => {
   });
 });
 
-// Mark an error as resolved
-router.patch('/errors/:id/resolve', async (req, res) => {
+// Mark an error as resolved (Admin only)
+router.patch('/errors/:id/resolve', requireRole(ROLES.ADMIN), async (req, res) => {
   const error = await SystemError.findByIdAndUpdate(
     req.params.id,
     { resolved: true, resolvedAt: new Date(), resolvedBy: req.user._id },
@@ -119,8 +123,8 @@ router.patch('/errors/:id/resolve', async (req, res) => {
   res.json({ success: true, data: { error } });
 });
 
-// ── Audit log (system-wide) ───────────────────────────────────────────────────
-router.get('/audit-log', async (req, res) => {
+// ── Audit log (Admin only) ────────────────────────────────────────────────────
+router.get('/audit-log', requireRole(ROLES.ADMIN), async (req, res) => {
   const { page = 1, limit = 20, action, userId } = req.query;
   const safePage  = Math.max(1, parseInt(page)  || 1);
   const safeLimit = Math.min(100, parseInt(limit) || 20);
@@ -149,8 +153,8 @@ router.get('/audit-log', async (req, res) => {
   });
 });
 
-// ── Overview stats ────────────────────────────────────────────────────────────
-router.get('/stats', async (req, res) => {
+// ── Overview stats (Admin only) ───────────────────────────────────────────────
+router.get('/stats', requireRole(ROLES.ADMIN), async (req, res) => {
   const now       = new Date();
   const last24h   = new Date(now - 24 * 60 * 60 * 1000);
   const last7d    = new Date(now - 7  * 24 * 60 * 60 * 1000);
@@ -200,6 +204,202 @@ router.get('/stats', async (req, res) => {
     }
   });
 });
+
+// ── Agent performance (Admin + Manager) ──────────────────────────────────────
+router.get('/agent-performance',
+  requireRole(ROLES.ADMIN, ROLES.MANAGER),
+  async (req, res) => {
+    const { period = '30d' } = req.query;
+
+    // Map period string to a date cutoff
+    const PERIODS = { '7d': 7, '30d': 30, '90d': 90 };
+    const days    = PERIODS[period] ?? 30;
+    const since   = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Per-agent ticket aggregation
+    const agentStats = await Ticket.aggregate([
+      {
+        $match: {
+          isDeleted: { $ne: true },
+          assignedTo: { $ne: null },
+          createdAt:  { $gte: since },
+        },
+      },
+      {
+        $group: {
+          _id: '$assignedTo',
+
+          totalAssigned: { $sum: 1 },
+
+          resolved: {
+            $sum: { $cond: [{ $in: ['$status', ['resolved', 'closed']] }, 1, 0] },
+          },
+
+          open: {
+            $sum: { $cond: [{ $eq: ['$status', 'open'] }, 1, 0] },
+          },
+
+          inProgress: {
+            $sum: { $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0] },
+          },
+
+          rejected: {
+            $sum: { $cond: [{ $eq: ['$acceptanceStatus', 'rejected'] }, 1, 0] },
+          },
+
+          // Average resolution time in hours (only for resolved/closed tickets)
+          avgResolutionHours: {
+            $avg: {
+              $cond: [
+                {
+                  $and: [
+                    { $in: ['$status', ['resolved', 'closed']] },
+                    { $ifNull: ['$resolvedAt', false] },
+                  ],
+                },
+                {
+                  $divide: [
+                    { $subtract: ['$resolvedAt', '$createdAt'] },
+                    3_600_000,
+                  ],
+                },
+                null,
+              ],
+            },
+          },
+
+          // Average response time (assigned → accepted) in hours
+          avgResponseHours: {
+            $avg: {
+              $cond: [
+                {
+                  $and: [
+                    { $ifNull: ['$acceptedAt', false] },
+                    { $ifNull: ['$assignedAt', false] },
+                  ],
+                },
+                {
+                  $divide: [
+                    { $subtract: ['$acceptedAt', '$assignedAt'] },
+                    3_600_000,
+                  ],
+                },
+                null,
+              ],
+            },
+          },
+
+          // Urgent + high priority tickets handled
+          highPriorityHandled: {
+            $sum: { $cond: [{ $in: ['$priority', ['urgent', 'high']] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from:         'users',
+          localField:   '_id',
+          foreignField: '_id',
+          as:           'agent',
+        },
+      },
+      { $unwind: '$agent' },
+      {
+        $project: {
+          agentId:            '$_id',
+          name:               '$agent.name',
+          email:              '$agent.email',
+          department:         '$agent.department',
+          isActive:           '$agent.isActive',
+          totalAssigned:      1,
+          resolved:           1,
+          open:               1,
+          inProgress:         1,
+          rejected:           1,
+          highPriorityHandled: 1,
+          avgResolutionHours: { $round: ['$avgResolutionHours', 1] },
+          avgResponseHours:   { $round: ['$avgResponseHours',   1] },
+          // Resolution rate as a percentage
+          resolutionRate: {
+            $cond: [
+              { $gt: ['$totalAssigned', 0] },
+              {
+                $round: [
+                  { $multiply: [{ $divide: ['$resolved', '$totalAssigned'] }, 100] },
+                  1,
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      { $sort: { resolved: -1, totalAssigned: -1 } },
+    ]);
+
+    // Team-level summary
+    const totals = agentStats.reduce(
+      (acc, a) => {
+        acc.totalAssigned      += a.totalAssigned;
+        acc.totalResolved      += a.resolved;
+        acc.totalOpen          += a.open;
+        acc.totalInProgress    += a.inProgress;
+        return acc;
+      },
+      { totalAssigned: 0, totalResolved: 0, totalOpen: 0, totalInProgress: 0 }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        period,
+        since:   since.toISOString(),
+        agents:  agentStats,
+        summary: {
+          ...totals,
+          agentCount:     agentStats.length,
+          teamResolutionRate:
+            totals.totalAssigned > 0
+              ? Math.round((totals.totalResolved / totals.totalAssigned) * 1000) / 10
+              : 0,
+        },
+      },
+    });
+  }
+);
+
+// ── System configuration (Admin only) ────────────────────────────────────────
+router.get('/config',
+  requireRole(ROLES.ADMIN),
+  async (req, res) => {
+    const config = await SystemConfig.getConfig();
+    res.json({ success: true, data: { config } });
+  }
+);
+
+const configSchema = Joi.object({
+  allowRegistration:           Joi.boolean(),
+  logLevel:                    Joi.string().valid('error', 'warn', 'info', 'debug'),
+  maxLoginAttempts:            Joi.number().integer().min(1).max(20),
+  sessionTimeoutMin:           Joi.number().integer().min(5).max(480),
+  passwordMinLength:           Joi.number().integer().min(6).max(32),
+  passwordRequireSpecialChars: Joi.boolean(),
+}).min(1);
+
+router.put('/config',
+  requireRole(ROLES.ADMIN),
+  async (req, res) => {
+    const { error, value } = configSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+    const config = await SystemConfig.updateConfig(value, req.user._id);
+    res.json({ success: true, message: 'System configuration updated', data: { config } });
+  }
+);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatUptime(seconds) {

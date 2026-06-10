@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Ticket, Users, BarChart3, Settings } from 'lucide-react';
+import { Search, Filter, Ticket, Users, LayoutDashboard } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/auth.context.jsx';
@@ -97,9 +97,9 @@ const ManagerTicketList = () => {
   };
 
   const tabs = [
-    { key: 'overview', label: 'Overview', icon: BarChart3 },
-    { key: 'unassigned', label: 'Unassigned', icon: Ticket },
-    { key: 'team', label: 'Team Tickets', icon: Users }
+    { key: 'overview',    label: 'Overview',      icon: LayoutDashboard },
+    { key: 'unassigned',  label: 'Unassigned',    icon: Ticket          },
+    { key: 'team',        label: 'Team Tickets',  icon: Users           },
   ];
 
   return (
@@ -118,13 +118,6 @@ const ManagerTicketList = () => {
           >
             <Users className="h-4 w-4 mr-2" />
             Team
-          </Link>
-          <Link
-            to="/app/reports"
-            className="btn btn-secondary flex items-center"
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Reports
           </Link>
         </div>
       </div>
@@ -150,8 +143,8 @@ const ManagerTicketList = () => {
                 <Ticket className="h-6 w-6 text-warning-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Unassigned</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.unassigned || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Open</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.open || 0}</p>
               </div>
             </div>
           </div>

@@ -52,6 +52,15 @@ const doRefresh = async () => {
   const res = await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
   const { accessToken } = res.data.data;
   tokenStore.setAccess(accessToken);
+
+  // Re-connect the socket with the new token so the active-users list stays
+  // accurate after a silent refresh (e.g. on page reload).
+  // Dynamic import avoids a circular dependency — socket imports api,
+  // api would import socket → break. Lazy import sidesteps that.
+  import('./socket.js').then(({ socketManager }) => {
+    socketManager.connect(accessToken);
+  }).catch(() => {});
+
   return accessToken;
 };
 
@@ -88,8 +97,17 @@ api.interceptors.response.use(
 
     const message = error.response?.data?.message || 'An error occurred';
 
+    // Only show a 403 toast for unexpected permission errors.
+    // Known 403s (like a manager hitting an admin-only endpoint) are handled
+    // gracefully by the component — don't spam the user with toasts.
     if (error.response?.status === 403) {
-      toast.error('Access denied. Insufficient permissions.');
+      // Suppress toasts for monitoring endpoints hit by non-admin roles —
+      // the component shows an appropriate empty/error state instead.
+      const url = error.config?.url ?? '';
+      const isSilent403 = url.includes('/monitoring/');
+      if (!isSilent403) {
+        toast.error('Access denied. Insufficient permissions.');
+      }
     } else if (error.response?.status >= 500) {
       toast.error('Server error. Please try again later.');
     } else if (error.response?.status >= 400 && error.response?.status !== 401) {

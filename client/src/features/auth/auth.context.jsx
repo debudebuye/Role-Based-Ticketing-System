@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { authService } from './auth.service.js';
-import { isTokenValid, isTokenExpired } from '../../shared/utils/tokenUtils.js';
+import { isTokenValid } from '../../shared/utils/tokenUtils.js';
 import { tokenStore } from '../../shared/utils/api.js';
+import { socketManager } from '../../shared/utils/socket.js';
 
 const AuthContext = createContext();
 
@@ -75,23 +76,54 @@ export const AuthProvider = ({ children }) => {
     } catch { /* ignore parse errors */ }
   };
 
-  // Initialize auth state from storage
+  // Keep the socket in sync with the auth token.
+  // Fires whenever the token changes (login, logout, silent refresh).
   useEffect(() => {
-    try {
-      const token = tokenStore.getAccess();
-      const user  = authService.getCurrentUser();
+    if (state.token) {
+      socketManager.connect(state.token);
+    } else {
+      socketManager.disconnect();
+    }
+  }, [state.token]);
 
-      if (token && user && isTokenValid(token)) {
+  // Initialize auth state — if user is in localStorage but token is in-memory
+  // (cleared on reload), trigger a silent refresh so the API interceptor
+  // restores both the token and the socket connection.
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      // Try to restore with whatever token is in memory (will be null on reload)
+      const token = tokenStore.getAccess();
+      if (token && isTokenValid(token)) {
         dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
         scheduleExpiry(token);
-      } else if (token) {
-        authService.logout();
+      } else {
+        // No valid in-memory token — attempt silent refresh via the HttpOnly cookie.
+        // The api.js interceptor will call /auth/refresh automatically on the
+        // first 401, so we fire a lightweight authenticated request to trigger it.
+        import('../../shared/utils/api.js').then(({ default: api }) => {
+          api.get('/auth/profile')
+            .then(res => {
+              const freshToken = tokenStore.getAccess();
+              const freshUser  = res.data?.data?.user || user;
+              if (freshToken) {
+                dispatch({ type: 'LOGIN_SUCCESS', payload: { user: freshUser, token: freshToken } });
+                localStorage.setItem('user', JSON.stringify(freshUser));
+                scheduleExpiry(freshToken);
+              }
+            })
+            .catch(() => {
+              // Refresh failed (cookie expired or missing) — clear stale user data
+              localStorage.removeItem('user');
+              dispatch({ type: 'LOGOUT' });
+            });
+        });
       }
-    } catch {
-      authService.logout();
     }
 
-    return () => { if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current); };
+    return () => {
+      if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
+    };
   }, []);
 
   const login = async (credentials) => {
@@ -100,6 +132,7 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.login(credentials);
       dispatch({ type: 'LOGIN_SUCCESS', payload: { user: result.user, token: result.accessToken } });
       scheduleExpiry(result.accessToken);
+      // socket connects automatically via the useEffect watching state.token
       return result;
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE', payload: error.response?.data?.message || 'Login failed' });
@@ -113,6 +146,7 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.register(userData);
       dispatch({ type: 'LOGIN_SUCCESS', payload: { user: result.user, token: result.accessToken } });
       scheduleExpiry(result.accessToken);
+      // socket connects automatically via the useEffect watching state.token
       return result;
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE', payload: error.response?.data?.message || 'Registration failed' });
@@ -122,6 +156,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
+    // socket disconnects automatically via the useEffect watching state.token
     authService.logout();
     dispatch({ type: 'LOGOUT' });
   };

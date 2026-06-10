@@ -22,12 +22,15 @@ module.exports = {
       script: 'server.js',
 
       // ── Clustering ──────────────────────────────────────────────────────────
-      // 'max' uses all available CPU cores.
-      // Set to a fixed number (e.g. 2) if you want to reserve cores for other
-      // processes.  Socket.IO requires sticky sessions when using cluster mode
-      // — ensure your load balancer (nginx / AWS ALB) is configured for that,
-      // or set instances to 1 if you haven't set up sticky sessions yet.
-      instances: process.env.WEB_CONCURRENCY || 'max',
+      // Socket.IO requires sticky sessions in cluster mode so that all requests
+      // from a given client hit the same worker (the long-poll fallback breaks
+      // otherwise).  We default to 1 instance which is safe on any setup.
+      //
+      // To scale up:
+      //   1. Enable sticky sessions in your nginx / AWS ALB config (see docs/nginx-sticky.md)
+      //   2. Set WEB_CONCURRENCY env var to the number of cores you want to use,
+      //      or set instances to 'max' to use all available cores.
+      instances: process.env.WEB_CONCURRENCY || 1,
       exec_mode: 'cluster',
 
       // ── Restart policy ───────────────────────────────────────────────────────

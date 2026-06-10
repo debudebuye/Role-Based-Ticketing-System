@@ -5,7 +5,6 @@ import {
   Ticket, 
   Users, 
   Plus,
-  BarChart3,
   Settings,
   Activity
 } from 'lucide-react';
@@ -26,17 +25,14 @@ const Sidebar = () => {
     }
 
     if ([ROLES.ADMIN, ROLES.MANAGER].includes(user?.role)) {
-      baseItems.push(
-        { name: 'Users',   href: '/app/users',   icon: Users    },
-        { name: 'Reports', href: '/app/reports', icon: BarChart3 }
-      );
+      baseItems.push({ name: 'Users', href: '/app/users', icon: Users });
     }
 
+    // Settings is available to every role
+    baseItems.push({ name: 'Settings', href: '/app/settings', icon: Settings });
+
     if (user?.role === ROLES.ADMIN) {
-      baseItems.push(
-        { name: 'Monitoring', href: '/app/monitoring', icon: Activity },
-        { name: 'Settings',   href: '/app/settings',   icon: Settings }
-      );
+      baseItems.push({ name: 'Monitoring', href: '/app/monitoring', icon: Activity });
     }
 
     return baseItems;

@@ -119,11 +119,18 @@ const AgentTicketList = () => {
   };
 
   const handleRejectSubmit = () => {
-    if (!rejectionReason.trim()) {
+    const reason = rejectionReason.trim();
+    if (!reason || reason === 'custom') {
       toast.error('Please provide a reason for rejection');
       return;
     }
-    handleRejectTicket(rejectingTicket, rejectionReason);
+    if (reason.length < 10) {
+      toast.error('Rejection reason must be at least 10 characters');
+      return;
+    }
+    rejectTicketMutation.mutate({ ticketId: rejectingTicket, reason });
+    setRejectingTicket(null);
+    setRejectionReason('');
   };
 
   const handleRejectCancel = () => {
@@ -512,25 +519,22 @@ const AgentTicketList = () => {
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 className="input w-full mb-3"
-                required
               >
-                <option value="">Select a reason...</option>
-                <option value="Workload too high - cannot take on additional tickets">Workload too high</option>
-                <option value="Lack of expertise in this area">Lack of expertise</option>
-                <option value="Currently working on higher priority tickets">Higher priority work</option>
-                <option value="Insufficient information provided">Insufficient information</option>
-                <option value="Requires specialized knowledge I don't have">Requires specialized knowledge</option>
-                <option value="Time constraints - cannot meet expected deadline">Time constraints</option>
+                <option value="">Select a reason…</option>
+                <option value="Workload too high — cannot take on additional tickets at this time.">Workload too high</option>
+                <option value="Lack of expertise required to resolve this ticket.">Lack of expertise</option>
+                <option value="Currently working on higher priority tickets.">Higher priority work</option>
+                <option value="Insufficient information provided to begin work.">Insufficient information</option>
+                <option value="Time constraints — cannot meet the expected deadline.">Time constraints</option>
+                <option value="custom">Other (type below)…</option>
               </select>
 
-              {rejectionReason && !rejectionReason.startsWith('Workload') && !rejectionReason.startsWith('Lack') && !rejectionReason.startsWith('Currently') && !rejectionReason.startsWith('Insufficient') && !rejectionReason.startsWith('Requires') && !rejectionReason.startsWith('Time') && (
+              {rejectionReason === 'custom' && (
                 <textarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
                   rows={3}
                   className="input resize-none w-full"
-                  placeholder="Please provide a detailed reason..."
-                  required
+                  placeholder="Describe the reason in at least 10 characters…"
+                  onChange={(e) => setRejectionReason(e.target.value === '' ? 'custom' : e.target.value)}
                 />
               )}
             </div>
@@ -538,7 +542,7 @@ const AgentTicketList = () => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRejectSubmit}
-                disabled={rejectTicketMutation.isPending || !rejectionReason.trim()}
+                disabled={rejectTicketMutation.isPending || !rejectionReason.trim() || rejectionReason === 'custom'}
                 className="btn btn-danger flex-1"
               >
                 {rejectTicketMutation.isPending ? (
