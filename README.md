@@ -1,10 +1,6 @@
 <div align="center">
 
-# Role-Based Ticket Management System
-
-**A full-stack MERN application for managing support tickets with role-based access control, real-time updates, and comprehensive admin monitoring.**
-
-Built with React, Node.js, Express, MongoDB, and Socket.IO
+<img src="assets/banner.svg" alt="Role-Based Ticket Management System" width="100%"/>
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](#license)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
