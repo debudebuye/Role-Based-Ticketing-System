@@ -4,7 +4,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](#license)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com)
 
 </div>
@@ -29,34 +29,53 @@ Every action is audit-logged. Every role has strict permission boundaries.
 - Password policy enforcement (length, complexity, weak password rejection)
 - Rate limiting on auth endpoints (5 req/15min) and general API (500 req/15min)
 - Helmet security headers, CORS configuration, MongoDB injection sanitization
+- Welcome email on registration, password reset via email (Nodemailer + Ethereal fallback)
+- Admin-controllable registration toggle (can disable public signups)
 
 ### Role-Based Access Control
 Four distinct roles with enforced permission boundaries:
 
 | Role | What They Can Do |
 |------|-----------------|
-| **Admin** | Full system access -- manage users, assign tickets, view monitoring dashboard, configure system settings |
+| **Admin** | Full system access -- manage users, assign tickets, view monitoring dashboard, configure system settings, toggle registration |
 | **Manager** | Assign tickets to agents, monitor team performance, manage agents and customers |
-| **Agent** | Accept/reject assigned tickets, update ticket status, communicate via comments |
+| **Agent** | Accept/reject assigned tickets, update ticket status, communicate via comments, view unassigned open tickets |
 | **Customer** | Create tickets, view own tickets, add comments, edit open tickets |
 
 ### Ticket Management
 - Create, update, soft-delete tickets with priority levels (low/medium/high/urgent)
-- Ticket categories: technical, billing, general, feature request, bug report, account
-- Agent assignment workflow with accept/reject and rejection reason tracking
+- Ticket categories: technical, billing, general, feature request, bug report, account, other
+- Agent assignment workflow with accept/reject and full rejection history tracking
 - Status pipeline: Open --> In Progress --> Resolved --> Closed
-- Full audit trail on every ticket operation
+- Full audit trail on every ticket operation (auto-expires after 90 days via MongoDB TTL)
+- Ticket metadata capture (browser, OS, device, IP address)
 
 ### Real-Time Updates
 - Socket.IO for live ticket notifications
 - Instant updates when tickets are assigned, status changes, or comments are added
+- Typing indicators for comment composition
+- User online/offline presence tracking
+
+### Comments
+- Add comments to tickets (internal/staff-only or external/customer-visible)
+- 15-minute edit window for comment authors
+- Comment notification emails
 
 ### Admin Monitoring Dashboard
 - System health overview (uptime, memory, active connections)
-- Active user tracking
+- Active user tracking with online/offline presence
 - Error feed from 5xx server errors persisted to database
 - Agent performance metrics
 - Ticket trend analytics
+- System configuration (registration toggle, log level, max login attempts, session timeout, password policies)
+
+### Email Service
+- Welcome emails on registration
+- Password reset emails with token
+- Ticket assignment and status change notifications
+- Comment notification emails
+- Bulk email capability
+- Ethereal test account fallback when no email credentials configured
 
 ### API Documentation
 - Swagger/OpenAPI docs served at `/api-docs` (disabled in production)
@@ -68,6 +87,10 @@ Four distinct roles with enforced permission boundaries:
 - Nginx reverse proxy with TLS 1.2/1.3, gzip, and security headers
 - PM2 clustering with memory guard and exponential backoff restarts
 - Pre-deploy environment validator (`check-env.js`)
+- Graceful shutdown handlers (SIGTERM/SIGINT)
+- Structured JSON logging (production) / colored text logging (development)
+- HTTP request logging middleware
+- Process-level error guards (uncaughtException, unhandledRejection)
 
 ---
 
@@ -75,11 +98,11 @@ Four distinct roles with enforced permission boundaries:
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, Vite, React Query, React Hook Form, Tailwind CSS, Socket.IO Client |
-| Backend | Node.js, Express, Mongoose, JWT, Socket.IO, Nodemailer |
+| Frontend | React 18, Vite, React Query, React Hook Form, Tailwind CSS, Socket.IO Client, Axios, React Router, Lucide Icons, Date-fns, DOMPurify |
+| Backend | Node.js, Express, Mongoose, JWT, Socket.IO, Nodemailer, Joi |
 | Database | MongoDB (Mongoose ODM) |
 | Validation | Joi (server), react-hook-form (client) |
-| Testing | Jest, Supertest (backend) |
+| Testing | Jest + Supertest (backend), Vitest (frontend) |
 | Deployment | Docker, Nginx, PM2 |
 
 ---
@@ -152,26 +175,34 @@ server/
 │   ├── users/          # User CRUD, role management, agent listing
 │   ├── tickets/        # Ticket CRUD, assignment, audit logs
 │   ├── comments/       # Comment system with internal/external flags
-│   └── monitoring/     # System health and performance endpoints
+│   └── monitoring/     # System health, performance, and config endpoints
 ├── shared/
 │   ├── middleware/     # Auth, RBAC, rate limiting, error handling, validation
 │   ├── services/       # Email service (Nodemailer + Ethereal fallback)
-│   ├── utils/          # Logger, password validation, helpers
-│   └── config/         # Swagger, database connection
+│   ├── utils/          # Logger, password validation
+│   ├── config/         # Swagger, database connection, Socket.IO setup
+│   ├── constants/      # Roles, permissions, ticket statuses, priorities, categories
+│   ├── models/         # System config and error models
+│   ├── routes/         # Route setup, system routes, legacy redirects
+│   └── templates/      # Email HTML templates
 ├── scripts/            # promote-admin utility
-├── tests/              # Jest + Supertest integration tests
-└── app.js
+├── __tests__/          # Jest + Supertest integration tests
+├── pm2.config.cjs      # PM2 ecosystem configuration
+└── server.js           # Application entry point
 
 client/src/
 ├── features/
 │   ├── auth/           # Login, Register, Forgot/Reset Password
 │   ├── tickets/        # Ticket list, detail, create forms
 │   ├── users/          # Admin user management
-│   └── dashboard/      # Role-based dashboard views + monitoring
+│   ├── comments/       # Comment service
+│   ├── dashboard/      # Role-based dashboard views + monitoring
+│   └── settings/       # Role-based settings (admin, manager, agent, customer)
 ├── shared/
-│   ├── components/     # Layout, Navbar, Sidebar, ProtectedRoute, alerts
+│   ├── components/     # Layout, Navbar, Sidebar, ProtectedRoute, ErrorBoundary, alerts
 │   ├── hooks/          # Custom React hooks
 │   └── utils/          # Constants, token utils, password validation
+├── pages/              # Landing page
 ├── App.jsx
 └── main.jsx
 ```
@@ -223,6 +254,21 @@ All endpoints are prefixed with `/api/v1`.
 - `PUT /api/v1/comments/:id` -- Update comment (author only, 15-min window)
 - `DELETE /api/v1/comments/:id` -- Delete comment
 
+### Monitoring (Admin)
+- `GET /api/v1/monitoring/health` -- System health overview
+- `GET /api/v1/monitoring/active-users` -- Active user tracking
+- `GET /api/v1/monitoring/errors` -- Server error feed
+- `PATCH /api/v1/monitoring/errors/:id/resolve` -- Mark error as resolved
+- `GET /api/v1/monitoring/audit-log` -- Global audit log
+- `GET /api/v1/monitoring/stats` -- System statistics
+- `GET /api/v1/monitoring/agent-performance` -- Agent metrics (Admin/Manager)
+- `GET /api/v1/monitoring/config` -- Get system configuration
+- `PUT /api/v1/monitoring/config` -- Update system configuration
+
+### System
+- `GET /health` -- Health check endpoint
+- `GET /api/version` -- API version information
+
 ---
 
 ## Security Features
@@ -237,19 +283,25 @@ All endpoints are prefixed with `/api/v1`.
 - **Security headers** -- Helmet with CSP, HSTS (1 year + preload), X-Frame-Options
 - **Password hashing** -- bcrypt with configurable rounds
 - **Stack traces** -- Only exposed in development mode
-- **Audit logging** -- Every ticket operation persisted with actor, changes, and timestamp
+- **Audit logging** -- Every ticket operation persisted with actor, changes, and timestamp (auto-expires after 90 days)
+- **Graceful shutdown** -- SIGTERM/SIGINT handlers with 30-second timeout
+- **Process error guards** -- uncaughtException and unhandledRejection handlers
 
 ---
 
 ## Testing
 
 ```bash
-# Run backend tests
+# Backend tests
 cd server
+npm test
+
+# Frontend tests
+cd client
 npm test
 ```
 
-Tests cover authentication flows (registration, login, refresh, password reset) and role-based access control across all four roles.
+Backend tests cover authentication flows (registration, login, refresh, password reset) and role-based access control across all four roles using Jest + Supertest. Frontend uses Vitest.
 
 ---
 
@@ -270,9 +322,9 @@ The production stack includes:
 
 ### Manual
 
-1. Set production environment variables (see `server/.env.production.example`)
+1. Set production environment variables (see `.env.production.example` at project root)
 2. Run `node scripts/check-env.js` to validate configuration
-3. Start server with PM2: `pm2 start ecosystem.config.cjs`
+3. Start server with PM2: `pm2 start pm2.config.cjs`
 4. Build client: `cd client && npm run build`
 5. Serve client build through Nginx or your hosting platform
 
@@ -293,12 +345,13 @@ EMAIL_USER=
 EMAIL_PASSWORD=
 ```
 
-See `server/.env.production.example` for the full list with descriptions.
+See `.env.production.example` at the project root for the full list with descriptions.
 
 ### Client (.env)
 
 ```
 VITE_API_URL=http://localhost:5000/api/v1
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
 ---
