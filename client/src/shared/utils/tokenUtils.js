@@ -39,17 +39,3 @@ export const getTokenExpiration = (token) => {
 export const isTokenValid = (token) => {
   return token && !isTokenExpired(token);
 };
-
-/**
- * Clear invalid tokens from localStorage
- */
-export const clearInvalidTokens = () => {
-  const token = localStorage.getItem('accessToken');
-  if (token && isTokenExpired(token)) {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    return true;
-  }
-  return false;
-};

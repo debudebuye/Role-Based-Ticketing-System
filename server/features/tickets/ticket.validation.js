@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { TICKET_STATUS, TICKET_PRIORITY, TICKET_CATEGORIES } from '../../shared/constants/roles.js';
+import { validate } from '../../shared/middleware/validation.middleware.js';
 
 export const createTicketSchema = Joi.object({
   title: Joi.string()
@@ -147,27 +148,4 @@ export const rejectTicketSchema = Joi.object({
     })
 });
 
-export const validate = (schema) => {
-  return (req, res, next) => {
-    const { error, value } = schema.validate(req.body, {
-      abortEarly: false,
-      stripUnknown: true
-    });
-    
-    if (error) {
-      const errors = error.details.map(detail => ({
-        field: detail.path.join('.'),
-        message: detail.message
-      }));
-      
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors
-      });
-    }
-    
-    req.body = value;
-    next();
-  };
-};
+export { validate };

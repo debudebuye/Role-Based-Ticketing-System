@@ -5,6 +5,8 @@ import { AppError } from '../../shared/middleware/error.middleware.js';
 import { ROLES, TICKET_STATUS } from '../../shared/constants/roles.js';
 import logger from '../../shared/utils/logger.js';
 
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export class TicketService {
   // ─── Audit helper ────────────────────────────────────────────────────────────
   static async _audit(ticketId, action, performedBy, changes = {}, meta = {}) {
@@ -68,10 +70,11 @@ export class TicketService {
       if (!query.$or) {
         query.$text = { $search: search };
       } else {
+        const safeSearch = escapeRegex(search);
         const searchConditions = [
-          { title:       { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { tags:        { $in: [new RegExp(search, 'i')] } }
+          { title:       { $regex: safeSearch, $options: 'i' } },
+          { description: { $regex: safeSearch, $options: 'i' } },
+          { tags:        { $in: [new RegExp(safeSearch, 'i')] } }
         ];
         query.$and = [{ $or: query.$or }, { $or: searchConditions }];
         delete query.$or;

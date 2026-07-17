@@ -167,9 +167,9 @@ const RegisterPage = () => {
               <select
                 {...register('role')}
                 className="input mt-1"
+                disabled
               >
                 <option value={ROLES.CUSTOMER}>{ROLE_LABELS[ROLES.CUSTOMER]}</option>
-                <option value={ROLES.AGENT}>{ROLE_LABELS[ROLES.AGENT]}</option>
               </select>
             </div>
 

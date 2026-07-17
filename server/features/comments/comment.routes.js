@@ -19,7 +19,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /comments/ticket/{ticketId}:
+ * /api/v1/comments/ticket/{ticketId}:
  *   get:
  *     summary: Get comments for a specific ticket
  *     tags: [Comments]
@@ -165,7 +165,7 @@ router.post('/ticket/:ticketId',
 
 /**
  * @swagger
- * /comments/{id}:
+ * /api/v1/comments/{id}:
  *   get:
  *     summary: Get specific comment
  *     tags: [Comments]

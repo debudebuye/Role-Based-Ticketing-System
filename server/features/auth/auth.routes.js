@@ -22,7 +22,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Authentication]
@@ -94,7 +94,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: Login user
  *     tags: [Authentication]
@@ -160,7 +160,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /auth/profile:
+ * /api/v1/auth/profile:
  *   get:
  *     summary: Get current user profile
  *     tags: [Authentication]
@@ -186,7 +186,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /auth/profile:
+ * /api/v1/auth/profile:
  *   put:
  *     summary: Update user profile
  *     tags: [Authentication]
@@ -221,7 +221,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /auth/change-password:
+ * /api/v1/auth/change-password:
  *   put:
  *     summary: Change user password
  *     tags: [Authentication]
@@ -257,7 +257,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /auth/refresh:
+ * /api/v1/auth/refresh:
  *   post:
  *     summary: Refresh authentication token
  *     tags: [Authentication]

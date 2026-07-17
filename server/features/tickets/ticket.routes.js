@@ -25,7 +25,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /tickets/stats:
+ * /api/v1/tickets/stats:
  *   get:
  *     summary: Get ticket statistics
  *     tags: [Tickets]
@@ -83,7 +83,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /tickets:
+ * /api/v1/tickets:
  *   get:
  *     summary: Get all tickets with filtering and pagination
  *     tags: [Tickets]
@@ -267,7 +267,7 @@ router.post('/',
 
 /**
  * @swagger
- * /tickets/{id}/assign:
+ * /api/v1/tickets/{id}/assign:
  *   put:
  *     summary: Assign ticket to an agent
  *     tags: [Tickets]
@@ -312,7 +312,7 @@ router.post('/',
 
 /**
  * @swagger
- * /tickets/{id}/accept:
+ * /api/v1/tickets/{id}/accept:
  *   put:
  *     summary: Accept assigned ticket
  *     tags: [Tickets]
@@ -342,7 +342,7 @@ router.post('/',
 
 /**
  * @swagger
- * /tickets/{id}/reject:
+ * /api/v1/tickets/{id}/reject:
  *   put:
  *     summary: Reject assigned ticket
  *     tags: [Tickets]
@@ -404,7 +404,7 @@ router.put('/:id/reject',
 
 /**
  * @swagger
- * /tickets/{id}:
+ * /api/v1/tickets/{id}:
  *   get:
  *     summary: Get ticket by ID
  *     tags: [Tickets]

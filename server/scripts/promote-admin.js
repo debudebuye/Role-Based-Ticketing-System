@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const email = process.argv[2] || 'admin@example.com';
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ticket-system';
 
-await mongoose.connect('mongodb://localhost:27017/ticket-system');
+await mongoose.connect(mongoURI);
 
 const result = await mongoose.connection
   .collection('users')

@@ -98,12 +98,20 @@ class EmailService {
   }
 
   getBasicTemplate(variables) {
+    const escapeHtml = (str) =>
+      String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>${variables.subject || 'Notification'}</title>
+          <title>${escapeHtml(variables.subject || 'Notification')}</title>
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -118,7 +126,7 @@ class EmailService {
               <h1>Ticket Management System</h1>
             </div>
             <div class="content">
-              ${variables.content || variables.message || 'Thank you for using our service.'}
+              ${escapeHtml(variables.content || variables.message || 'Thank you for using our service.')}
             </div>
             <div class="footer">
               <p>This is an automated message. Please do not reply to this email.</p>

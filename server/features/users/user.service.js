@@ -4,6 +4,8 @@ import { ROLES } from '../../shared/constants/roles.js';
 import emailService from '../../shared/services/email.service.js';
 import logger from '../../shared/utils/logger.js';
 
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export class UserService {
   static async getAllUsers(filters = {}, pagination = {}, currentUser) {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = pagination;
@@ -47,10 +49,11 @@ export class UserService {
     
     if (isActive !== undefined) query.isActive = isActive;
     if (search) {
+      const safeSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { department: { $regex: search, $options: 'i' } }
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { email: { $regex: safeSearch, $options: 'i' } },
+        { department: { $regex: safeSearch, $options: 'i' } }
       ];
     }
     

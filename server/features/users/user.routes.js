@@ -19,7 +19,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /users/stats:
+ * /api/v1/users/stats:
  *   get:
  *     summary: Get user statistics
  *     tags: [Users]
@@ -70,7 +70,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /users/agents:
+ * /api/v1/users/agents:
  *   get:
  *     summary: Get list of active agents
  *     tags: [Users]
@@ -114,7 +114,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /users:
+ * /api/v1/users:
  *   get:
  *     summary: Get all users with filtering and pagination
  *     tags: [Users]
@@ -223,7 +223,7 @@ router.get('/',
 
 /**
  * @swagger
- * /users:
+ * /api/v1/users:
  *   post:
  *     summary: Create a new user
  *     tags: [Users]
@@ -296,7 +296,7 @@ router.get('/',
 
 /**
  * @swagger
- * /users/{id}:
+ * /api/v1/users/{id}:
  *   get:
  *     summary: Get user by ID
  *     tags: [Users]
