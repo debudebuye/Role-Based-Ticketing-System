@@ -195,12 +195,13 @@ describe('ADMIN role', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
 
-    // Verify user is gone
+    // Verify user is soft-deleted (deactivated)
     const getRes = await request(app)
       .get(`/api/v1/users/${created._id}`)
       .set(bearer(adminToken));
 
-    expect(getRes.status).toBe(404);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.data.user.isActive).toBe(false);
   });
 });
 
