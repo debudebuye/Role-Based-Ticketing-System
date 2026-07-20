@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0c29"/>
+      <stop offset="50%" style="stop-color:#302b63"/>
+      <stop offset="100%" style="stop-color:#24243e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#11998e"/>
+      <stop offset="100%" style="stop-color:#38ef7d"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f7971e"/>
+      <stop offset="100%" style="stop-color:#ffd200"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- Grid pattern -->
+  <g opacity="0.05">
+    <line x1="0" y1="0" x2="1200" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="1200" y1="0" x2="0" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="400" stroke="white" stroke-width="0.5"/>
+    <line x1="900" y1="0" x2="900" y2="400" stroke="white" stroke-width="0.5"/>
+    <line x1="0" y1="100" x2="1200" y2="100" stroke="white" stroke-width="0.5"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke="white" stroke-width="0.5"/>
+  </g>
+
+  <!-- Decorative circles -->
+  <circle cx="1100" cy="80" r="120" fill="#667eea" opacity="0.08"/>
+  <circle cx="100" cy="350" r="180" fill="#764ba2" opacity="0.06"/>
+  <circle cx="600" cy="-50" r="200" fill="#38ef7d" opacity="0.04"/>
+
+  <!-- Left accent line -->
+  <rect x="60" y="120" width="4" height="80" rx="2" fill="url(#accent)"/>
+
+  <!-- Title -->
+  <text x="80" y="145" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="white" filter="url(#glow)">
+    Role-Based Ticket
+  </text>
+  <text x="80" y="195" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="white" filter="url(#glow)">
+    Management System
+  </text>
+
+  <!-- Subtitle -->
+  <text x="80" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#a0aec0" font-weight="400">
+    Full-stack MERN helpdesk platform with real-time updates, audit logging,
+  </text>
+  <text x="80" y="260" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#a0aec0" font-weight="400">
+    role-based access control, and comprehensive admin monitoring.
+  </text>
+
+  <!-- Feature cards -->
+  <!-- Card 1: Auth -->
+  <rect x="80" y="295" width="165" height="80" rx="8" fill="#1a1a2e" stroke="#667eea" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="110" cy="322" r="14" fill="#667eea" opacity="0.2"/>
+  <path d="M110 314 v16 M102 322 h16 M110 328 a4 4 0 0 1 0 8 a4 4 0 0 1 0 -8" stroke="#667eea" stroke-width="1.5" fill="none"/>
+  <text x="132" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="white">JWT Auth</text>
+  <text x="132" y="345" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Refresh rotation</text>
+  <text x="132" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Account lockout</text>
+
+  <!-- Card 2: RBAC -->
+  <rect x="265" y="295" width="165" height="80" rx="8" fill="#1a1a2e" stroke="#38ef7d" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="295" cy="322" r="14" fill="#38ef7d" opacity="0.2"/>
+  <path d="M289 322 l5 5 l9 -10" stroke="#38ef7d" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="317" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="white">4 Roles</text>
+  <text x="317" y="345" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Admin / Manager</text>
+  <text x="317" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Agent / Customer</text>
+
+  <!-- Card 3: Tickets -->
+  <rect x="450" y="295" width="165" height="80" rx="8" fill="#1a1a2e" stroke="#f7971e" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="480" cy="322" r="14" fill="#f7971e" opacity="0.2"/>
+  <rect x="473" y="315" width="14" height="14" rx="2" stroke="#f7971e" stroke-width="1.5" fill="none"/>
+  <line x1="476" y1="319" x2="484" y2="319" stroke="#f7971e" stroke-width="1"/>
+  <line x1="476" y1="322" x2="484" y2="322" stroke="#f7971e" stroke-width="1"/>
+  <line x1="476" y1="325" x2="481" y2="325" stroke="#f7971e" stroke-width="1"/>
+  <text x="502" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="white">Tickets</text>
+  <text x="502" y="345" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Assign / Accept</text>
+  <text x="502" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Audit trail</text>
+
+  <!-- Card 4: Real-time -->
+  <rect x="635" y="295" width="165" height="80" rx="8" fill="#1a1a2e" stroke="#e53e3e" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="665" cy="322" r="14" fill="#e53e3e" opacity="0.2"/>
+  <path d="M658 322 a7 7 0 0 1 14 0" stroke="#e53e3e" stroke-width="1.5" fill="none"/>
+  <path d="M661 322 a4 4 0 0 1 8 0" stroke="#e53e3e" stroke-width="1.5" fill="none"/>
+  <circle cx="665" cy="322" r="1.5" fill="#e53e3e"/>
+  <text x="687" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="white">Real-Time</text>
+  <text x="687" y="345" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Socket.IO events</text>
+  <text x="687" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Live notifications</text>
+
+  <!-- Card 5: Deploy -->
+  <rect x="820" y="295" width="165" height="80" rx="8" fill="#1a1a2e" stroke="#9f7aea" stroke-width="1.5" opacity="0.9"/>
+  <circle cx="850" cy="322" r="14" fill="#9f7aea" opacity="0.2"/>
+  <rect x="843" y="317" width="14" height="10" rx="1" stroke="#9f7aea" stroke-width="1.3" fill="none"/>
+  <line x1="843" y1="327" x2="857" y2="327" stroke="#9f7aea" stroke-width="1"/>
+  <text x="872" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="white">Docker</text>
+  <text x="872" y="345" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Nginx + PM2</text>
+  <text x="872" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#718096">Multi-stage build</text>
+
+  <!-- Tech stack badges -->
+  <g filter="url(#shadow)">
+    <!-- React -->
+    <rect x="820" y="130" width="110" height="32" rx="16" fill="#202340" stroke="#61DAFB" stroke-width="1"/>
+    <circle cx="844" cy="146" r="8" fill="none" stroke="#61DAFB" stroke-width="1.2"/>
+    <ellipse cx="844" cy="146" rx="14" ry="5" fill="none" stroke="#61DAFB" stroke-width="0.8" transform="rotate(0 844 146)"/>
+    <ellipse cx="844" cy="146" rx="14" ry="5" fill="none" stroke="#61DAFB" stroke-width="0.8" transform="rotate(60 844 146)"/>
+    <ellipse cx="844" cy="146" rx="14" ry="5" fill="none" stroke="#61DAFB" stroke-width="0.8" transform="rotate(120 844 146)"/>
+    <text x="860" y="151" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#61DAFB">React</text>
+
+    <!-- Node.js -->
+    <rect x="945" y="130" width="110" height="32" rx="16" fill="#202340" stroke="#68A063" stroke-width="1"/>
+    <text x="963" y="151" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#68A063">Node.js</text>
+
+    <!-- MongoDB -->
+    <rect x="820" y="172" width="110" height="32" rx="16" fill="#202340" stroke="#47A248" stroke-width="1"/>
+    <text x="835" y="193" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#47A248">MongoDB</text>
+
+    <!-- Socket.IO -->
+    <rect x="945" y="172" width="110" height="32" rx="16" fill="#202340" stroke="#E53E3E" stroke-width="1"/>
+    <text x="964" y="193" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#E53E3E">Socket.IO</text>
+
+    <!-- Express -->
+    <rect x="883" y="214" width="110" height="32" rx="16" fill="#202340" stroke="#A0A0A0" stroke-width="1"/>
+    <text x="906" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" fill="#A0A0A0">Express</text>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="396" width="1200" height="4" fill="url(#accent)"/>
+</svg>

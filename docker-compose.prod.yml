@@ -1,0 +1,50 @@
+version: "3.9"
+
+# ── Production overrides ──────────────────────────────────────────────────────
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Before running:
+#   1. Copy .env.example → .env and fill in ALL values (see comments below)
+#   2. Obtain TLS certificates (Let's Encrypt recommended):
+#        certbot certonly --standalone -d yourdomain.com
+#      Then set CERT_PATH and KEY_PATH in .env (or use the defaults below)
+#   3. Set VITE_API_URL and CORS_ORIGIN to your real domain
+#
+# Required .env values for production:
+#   MONGO_ROOT_USER, MONGO_ROOT_PASSWORD
+#   JWT_SECRET, JWT_REFRESH_SECRET
+#   CORS_ORIGIN=https://yourdomain.com
+#   CLIENT_URL=https://yourdomain.com
+#   VITE_API_URL=https://api.yourdomain.com/api/v1   (or https://yourdomain.com/api/v1)
+#   EMAIL_FROM, EMAIL_SERVICE, EMAIL_USER, EMAIL_PASSWORD
+#   CERT_PATH=/etc/letsencrypt/live/yourdomain.com/fullchain.pem
+#   KEY_PATH=/etc/letsencrypt/live/yourdomain.com/privkey.pem
+
+services:
+  mongo:
+    # In production, do NOT expose the MongoDB port to the host.
+    # Only the server container needs it, and they share the ticket-net network.
+    ports: []
+
+  server:
+    restart: always
+    # Run env validation before the server starts — exits immediately if anything is wrong
+    command: sh -c "node check-env.js && node server.js"
+    environment:
+      NODE_ENV: production
+      RATE_LIMIT_MAX: 500
+      TRUST_PROXY: 1
+      LOG_LEVEL: info
+
+  client:
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Mount your TLS certificates into the container.
+      # CERT_PATH and KEY_PATH default to Let's Encrypt paths if not set.
+      - ${CERT_PATH:-/etc/letsencrypt/live/yourdomain.com/fullchain.pem}:/etc/nginx/certs/fullchain.pem:ro
+      - ${KEY_PATH:-/etc/letsencrypt/live/yourdomain.com/privkey.pem}:/etc/nginx/certs/privkey.pem:ro
