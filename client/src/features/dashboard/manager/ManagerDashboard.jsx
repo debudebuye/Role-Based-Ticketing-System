@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Ticket, Users, Clock, TrendingUp, Award, AlertCircle,
-  CheckCircle2, BarChart3, RefreshCw, ChevronUp, ChevronDown
+  BarChart3, RefreshCw, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ticketService } from '../../tickets/ticket.service.js';
@@ -221,12 +221,12 @@ const AgentPerformanceTable = () => {
                     <RateBadge rate={agent.resolutionRate} />
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {agent.avgResolutionHours != null
+                    {agent.avgResolutionHours !== null
                       ? `${agent.avgResolutionHours}h`
                       : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                    {agent.avgResponseHours != null
+                    {agent.avgResponseHours !== null
                       ? `${agent.avgResponseHours}h`
                       : <span className="text-gray-300">—</span>}
                   </td>

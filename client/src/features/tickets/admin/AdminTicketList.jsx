@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, Ticket, Users, Settings } from 'lucide-react';
+import { Search, Ticket, Users, Settings } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/auth.context.jsx';
@@ -10,7 +10,7 @@ import { STATUS_COLORS, PRIORITY_COLORS, STATUS_LABELS, PRIORITY_LABELS, CATEGOR
 import { formatDate, debounce } from '../../../shared/utils/helpers.js';
 
 const AdminTicketList = () => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({

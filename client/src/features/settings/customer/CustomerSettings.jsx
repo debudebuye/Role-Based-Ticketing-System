@@ -69,7 +69,7 @@ const CustomerSettings = ({ user }) => {
 };
 
 // Customer-specific Communication Settings
-const CommunicationSettings = ({ user }) => {
+const CommunicationSettings = ({ user: _user }) => {
   const [commSettings, setCommSettings] = useState({
     preferredContactMethod: 'email',
     allowSMSNotifications: false,
@@ -195,7 +195,7 @@ const CommunicationSettings = ({ user }) => {
           <div className="bg-green-50 p-4 rounded-lg">
             <h4 className="text-sm font-medium text-green-900 mb-2">📞 Contact Information</h4>
             <p className="text-sm text-green-800">
-              Your current contact preferences ensure you'll receive important updates about your tickets. 
+              Your current contact preferences ensure you&apos;ll receive important updates about your tickets. 
               You can change these settings at any time.
             </p>
           </div>
@@ -211,7 +211,7 @@ const CommunicationSettings = ({ user }) => {
 };
 
 // Customer-specific Feedback Settings
-const FeedbackSettings = ({ user }) => {
+const FeedbackSettings = ({ user: _user }) => {
   const [feedbackSettings, setFeedbackSettings] = useState({
     enableFeedbackRequests: true,
     feedbackFrequency: 'after_resolution',
@@ -322,7 +322,7 @@ const FeedbackSettings = ({ user }) => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="text-sm font-medium text-blue-900 mb-2">💡 Why Feedback Matters</h4>
             <p className="text-sm text-blue-800">
-              Your feedback helps us improve our service quality and ensures we're meeting your needs. 
+              Your feedback helps us improve our service quality and ensures we&apos;re meeting your needs. 
               All feedback is reviewed by our team to enhance the support experience.
             </p>
           </div>

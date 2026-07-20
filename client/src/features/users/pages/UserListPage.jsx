@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Users, Edit, Trash2, Mail, Phone, Calendar, Shield } from 'lucide-react';
+import { Plus, Search, Users, Edit, Trash2, Mail, Phone, Calendar, Shield } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/auth.context.jsx';

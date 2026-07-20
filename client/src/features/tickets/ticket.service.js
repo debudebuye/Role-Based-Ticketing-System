@@ -2,20 +2,16 @@ import api from '../../shared/utils/api.js';
 
 export const ticketService = {
   async getAllTickets(params = {}) {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, value);
-        }
-      });
-      
-      const response = await api.get(`/tickets?${queryParams.toString()}`);
-      return response.data.data;
-    } catch (error) {
-      throw error;
-    }
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value);
+      }
+    });
+    
+    const response = await api.get(`/tickets?${queryParams.toString()}`);
+    return response.data.data;
   },
 
   async getTicketById(id) {

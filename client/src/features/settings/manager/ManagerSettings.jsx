@@ -71,7 +71,7 @@ const ManagerSettings = ({ user }) => {
 };
 
 // Manager-specific Team Management Settings
-const TeamManagementSettings = ({ user }) => {
+const TeamManagementSettings = ({ user: _user }) => {
   const [teamSettings, setTeamSettings] = useState({
     autoAssignTickets: true,
     workloadBalancing: 'round_robin',
@@ -187,7 +187,7 @@ const TeamManagementSettings = ({ user }) => {
 };
 
 // Manager-specific Reporting Settings
-const ReportingSettings = ({ user }) => {
+const ReportingSettings = ({ user: _user }) => {
   const [reportSettings, setReportSettings] = useState({
     weeklyReports: true,
     monthlyReports: true,
@@ -291,7 +291,7 @@ const ReportingSettings = ({ user }) => {
 };
 
 // Manager-specific Workflow Settings
-const WorkflowSettings = ({ user }) => {
+const WorkflowSettings = ({ user: _user }) => {
   const [workflowSettings, setWorkflowSettings] = useState({
     ticketApprovalRequired: false,
     escalationRules: true,

@@ -24,7 +24,7 @@ const CreateTicketPage = () => {
 
   const createTicketMutation = useMutation({
     mutationFn: ticketService.createTicket,
-    onSuccess: (ticket) => {
+    onSuccess: (_ticket) => {
       toast.success('Ticket created successfully!');
       // Invalidate and refetch ticket-related queries
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -54,7 +54,7 @@ const CreateTicketPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Create New Ticket</h1>
           <p className="text-gray-600">
-            Describe your issue and we'll help you resolve it
+            Describe your issue and we&apos;ll help you resolve it
           </p>
         </div>
       </div>

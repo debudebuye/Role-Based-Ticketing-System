@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const UserManagementSettings = ({ user }) => {
+const UserManagementSettings = ({ user: _user }) => {
   const [userMgmtSettings, setUserMgmtSettings] = useState({
     defaultRole: 'customer',
     autoActivateUsers: false,

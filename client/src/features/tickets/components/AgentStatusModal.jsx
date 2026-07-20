@@ -88,7 +88,7 @@ const AgentStatusModal = ({ isOpen, onClose, ticket, onUpdate, isLoading }) => {
           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
             <h4 className="text-sm font-medium text-blue-900 mb-1">Status Guidelines:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• <strong>In Progress:</strong> You're actively working on this ticket</li>
+              <li>• <strong>In Progress:</strong> You&apos;re actively working on this ticket</li>
               <li>• <strong>Resolved:</strong> Issue is fixed and ready for customer review</li>
               <li>• <strong>Closed:</strong> Ticket is completely finished</li>
             </ul>

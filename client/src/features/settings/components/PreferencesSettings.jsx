@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-const PreferencesSettings = ({ user }) => {
+const PreferencesSettings = ({ user: _user }) => {
   const [preferences, setPreferences] = useState({
     theme: 'light',
     language: 'en',
