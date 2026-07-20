@@ -41,6 +41,12 @@ afterEach(async () => {
   await clearCollections();
 });
 
+/** Extract cookie name=value pair from raw Set-Cookie header array */
+const extractCookie = (cookies, name) => {
+  const raw = cookies.find((c) => c.startsWith(`${name}=`));
+  return raw ? raw.split(';')[0] : '';
+};
+
 // ── Registration ──────────────────────────────────────────────────────────────
 describe('POST /api/v1/auth/register', () => {
   it('registers a customer and returns accessToken + sets refresh cookie', async () => {
@@ -187,7 +193,7 @@ describe('POST /api/v1/auth/refresh', () => {
 
     const res = await request(app)
       .post('/api/v1/auth/refresh')
-      .set('Cookie', cookies);
+      .set('Cookie', extractCookie(cookies, 'refreshToken'));
 
     expect(res.status).toBe(200);
     expect(res.body.data.accessToken).toBeDefined();
@@ -201,16 +207,17 @@ describe('POST /api/v1/auth/refresh', () => {
   it('detects refresh token reuse and invalidates all sessions', async () => {
     const payload = makeUserPayload();
     const { cookies } = await registerUser(app, payload);
+    const cookiePair = extractCookie(cookies, 'refreshToken');
 
     // First refresh — rotates the token
     await request(app)
       .post('/api/v1/auth/refresh')
-      .set('Cookie', cookies);
+      .set('Cookie', cookiePair);
 
     // Reuse the original (now superseded) cookie — must be rejected
     const res = await request(app)
       .post('/api/v1/auth/refresh')
-      .set('Cookie', cookies);
+      .set('Cookie', cookiePair);
 
     expect(res.status).toBe(401);
   });
@@ -254,7 +261,7 @@ describe('POST /api/v1/auth/logout', () => {
     const logoutRes = await request(app)
       .post('/api/v1/auth/logout')
       .set(bearer(accessToken))
-      .set('Cookie', cookies);
+      .set('Cookie', extractCookie(cookies, 'refreshToken'));
 
     expect(logoutRes.status).toBe(200);
 
@@ -270,7 +277,7 @@ describe('POST /api/v1/auth/logout', () => {
     // Subsequent refresh with the old cookie must fail
     const refreshRes = await request(app)
       .post('/api/v1/auth/refresh')
-      .set('Cookie', cookies);
+      .set('Cookie', extractCookie(cookies, 'refreshToken'));
 
     expect(refreshRes.status).toBe(401);
   });
@@ -293,7 +300,7 @@ describe('PUT /api/v1/auth/change-password', () => {
     // Old refresh token must no longer work
     const refreshRes = await request(app)
       .post('/api/v1/auth/refresh')
-      .set('Cookie', cookies);
+      .set('Cookie', extractCookie(cookies, 'refreshToken'));
 
     expect(refreshRes.status).toBe(401);
 
