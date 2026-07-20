@@ -84,7 +84,7 @@ export const updateUserSchema = Joi.object({
   
   phone: Joi.string()
     .trim()
-    .pattern(/^[\+]?[1-9][\d]{0,15}$/)
+    .pattern(/^[+]?[1-9][\d]{0,15}$/)
     .optional()
     .allow('')
     .messages({

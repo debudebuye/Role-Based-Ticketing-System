@@ -44,7 +44,7 @@ router.use(authenticate);
  *       403:
  *         description: Admin role required
  */
-router.get('/health', requireRole(ROLES.ADMIN), async (req, res) => {
+router.get('/health', requireRole(ROLES.ADMIN), (req, res) => {
   const dbState   = mongoose.connection.readyState;
   const dbHealthy = dbState === 1;
   const memUsage  = process.memoryUsage();

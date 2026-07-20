@@ -19,7 +19,7 @@ class EmailService {
     // In test environment, use a no-op mock — no network calls during tests.
     if (process.env.NODE_ENV === 'test') {
       this.transporter = {
-        sendMail: async (mailOptions) => {
+        sendMail: (_mailOptions) => {
           return { messageId: 'test-mock-' + Date.now() };
         }
       };
@@ -61,7 +61,7 @@ class EmailService {
     } catch (error) {
       logger.warn('Email service initialization failed — using mock fallback', { err: error });
       this.transporter = {
-        sendMail: async (mailOptions) => {
+        sendMail: (mailOptions) => {
           logger.debug('Mock email (fallback)', { to: mailOptions.to, subject: mailOptions.subject });
           return { messageId: 'mock-' + Date.now() };
         }

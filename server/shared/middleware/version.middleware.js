@@ -127,7 +127,7 @@ export const getVersionInfo = () => ({
  * Check if a version is supported
  */
 export const isVersionSupported = (version) => {
-  return API_VERSIONS.hasOwnProperty(version);
+  return Object.prototype.hasOwnProperty.call(API_VERSIONS, version);
 };
 
 /**

@@ -219,8 +219,8 @@ export class UserService {
     };
   }
   
-  static async getAgents() {
-    return await User.find({ 
+  static getAgents() {
+    return User.find({ 
       role: ROLES.AGENT, 
       isActive: true 
     }).select('name email department');

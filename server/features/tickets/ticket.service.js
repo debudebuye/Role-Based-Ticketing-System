@@ -41,7 +41,7 @@ export class TicketService {
     const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'priority', 'status', 'title', 'category'];
     const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
 
-    let query = {};
+    const query = {};
 
     switch (user.role) {
       case ROLES.CUSTOMER:
@@ -285,7 +285,7 @@ export class TicketService {
 
   // ─── getTicketStats ──────────────────────────────────────────────────────────
   static async getTicketStats(user) {
-    let matchStage = {};
+    const matchStage = {};
 
     switch (user.role) {
       case ROLES.CUSTOMER:

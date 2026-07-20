@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 /**
  * check-env.js — Pre-deploy environment variable validator
  *
