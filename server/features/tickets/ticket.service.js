@@ -4,8 +4,7 @@ import { User } from '../users/user.model.js';
 import { AppError } from '../../shared/middleware/error.middleware.js';
 import { ROLES, TICKET_STATUS } from '../../shared/constants/roles.js';
 import logger from '../../shared/utils/logger.js';
-
-const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+import { escapeRegex } from '../../shared/utils/string.utils.js';
 
 export class TicketService {
   // ─── Audit helper ────────────────────────────────────────────────────────────

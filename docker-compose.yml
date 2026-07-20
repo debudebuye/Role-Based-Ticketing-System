@@ -15,13 +15,13 @@ services:
     container_name: ticket-mongo
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?Set MONGO_ROOT_USER in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
       MONGO_INITDB_DATABASE: ticket-system
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
+    # NOTE: MongoDB port is NOT exposed to the host in the base config.
+    # For local dev access, use docker-compose.dev.yml which binds 27017.
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -45,7 +45,7 @@ services:
     environment:
       NODE_ENV:            ${NODE_ENV:-production}
       PORT:                5000
-      MONGODB_URI:         mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-changeme}@mongo:27017/ticket-system?authSource=admin
+      MONGODB_URI:         mongodb://${MONGO_ROOT_USER:?Set MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD}@mongo:27017/ticket-system?authSource=admin
       JWT_SECRET:          ${JWT_SECRET}
       JWT_REFRESH_SECRET:  ${JWT_REFRESH_SECRET}
       JWT_EXPIRE:          ${JWT_EXPIRE:-15m}

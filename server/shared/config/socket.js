@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../../features/users/user.model.js';
 import logger from '../utils/logger.js';
+import { wsRateLimitMiddleware } from '../middleware/wsRateLimit.middleware.js';
 
 // ── Connected users registry ──────────────────────────────────────────────────
 // Keyed by socket.id (not userId) so multiple tabs / reconnections work
@@ -9,6 +10,9 @@ import logger from '../utils/logger.js';
 const connectedSockets = new Map();
 
 export const setupSocketHandlers = (io) => {
+  // ── Rate limiting (must come before auth) ──────────────────────────────────
+  io.use(wsRateLimitMiddleware);
+
   // ── Authentication middleware ─────────────────────────────────────────────
   io.use(async (socket, next) => {
     try {

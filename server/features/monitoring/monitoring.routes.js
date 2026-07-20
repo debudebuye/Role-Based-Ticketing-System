@@ -2,6 +2,11 @@
  * Admin Monitoring Routes
  * All endpoints require authentication + admin role,
  * except /agent-performance which is admin + manager.
+ *
+ * @swagger
+ * tags:
+ *   name: Monitoring
+ *   description: Admin monitoring, system health, and analytics endpoints
  */
 
 import { Router } from 'express';
@@ -25,6 +30,20 @@ const router = Router();
 router.use(authenticate);
 
 // ── System health (Admin only) ────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/health:
+ *   get:
+ *     summary: Get system health status
+ *     tags: [Monitoring]
+ *     responses:
+ *       200:
+ *         description: System health details
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/health', requireRole(ROLES.ADMIN), async (req, res) => {
   const dbState   = mongoose.connection.readyState;
   const dbHealthy = dbState === 1;
@@ -65,6 +84,20 @@ router.get('/health', requireRole(ROLES.ADMIN), async (req, res) => {
 });
 
 // ── Active users (Admin only) ─────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/active-users:
+ *   get:
+ *     summary: List currently connected users
+ *     tags: [Monitoring]
+ *     responses:
+ *       200:
+ *         description: Connected users list
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/active-users', requireRole(ROLES.ADMIN), (req, res) => {
   const io = req.io;
   const connected = io?.getConnectedUsers?.() ?? [];
@@ -84,6 +117,43 @@ router.get('/active-users', requireRole(ROLES.ADMIN), (req, res) => {
 });
 
 // ── Error feed (Admin only) ───────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/errors:
+ *   get:
+ *     summary: List system errors with pagination
+ *     tags: [Monitoring]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           maximum: 100
+ *         description: Items per page
+ *       - in: query
+ *         name: resolved
+ *         schema:
+ *           type: string
+ *           enum: ['true', 'false']
+ *         description: Filter by resolved status
+ *       - in: query
+ *         name: statusCode
+ *         schema:
+ *           type: integer
+ *         description: Filter by HTTP status code
+ *     responses:
+ *       200:
+ *         description: Paginated error list
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/errors', requireRole(ROLES.ADMIN), async (req, res) => {
   const { page = 1, limit = 20, resolved, statusCode } = req.query;
   const safePage  = Math.max(1, parseInt(page)  || 1);
@@ -113,6 +183,29 @@ router.get('/errors', requireRole(ROLES.ADMIN), async (req, res) => {
 });
 
 // Mark an error as resolved (Admin only)
+/**
+ * @swagger
+ * /api/v1/monitoring/errors/{id}/resolve:
+ *   patch:
+ *     summary: Mark a system error as resolved
+ *     tags: [Monitoring]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Error ID
+ *     responses:
+ *       200:
+ *         description: Error marked as resolved
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Error not found
+ */
 router.patch('/errors/:id/resolve', requireRole(ROLES.ADMIN), async (req, res) => {
   const error = await SystemError.findByIdAndUpdate(
     req.params.id,
@@ -124,6 +217,42 @@ router.patch('/errors/:id/resolve', requireRole(ROLES.ADMIN), async (req, res) =
 });
 
 // ── Audit log (Admin only) ────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/audit-log:
+ *   get:
+ *     summary: List audit log entries
+ *     tags: [Monitoring]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           maximum: 100
+ *         description: Items per page
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *         description: Filter by action type
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: Filter by performing user ID
+ *     responses:
+ *       200:
+ *         description: Paginated audit log entries
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/audit-log', requireRole(ROLES.ADMIN), async (req, res) => {
   const { page = 1, limit = 20, action, userId } = req.query;
   const safePage  = Math.max(1, parseInt(page)  || 1);
@@ -154,6 +283,20 @@ router.get('/audit-log', requireRole(ROLES.ADMIN), async (req, res) => {
 });
 
 // ── Overview stats (Admin only) ───────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/stats:
+ *   get:
+ *     summary: Get dashboard overview statistics
+ *     tags: [Monitoring]
+ *     responses:
+ *       200:
+ *         description: Overview stats including users, tickets, errors, and ticket trend
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/stats', requireRole(ROLES.ADMIN), async (req, res) => {
   const now       = new Date();
   const last24h   = new Date(now - 24 * 60 * 60 * 1000);
@@ -206,6 +349,28 @@ router.get('/stats', requireRole(ROLES.ADMIN), async (req, res) => {
 });
 
 // ── Agent performance (Admin + Manager) ──────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/agent-performance:
+ *   get:
+ *     summary: Get per-agent performance metrics
+ *     tags: [Monitoring]
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: ['7d', '30d', '90d']
+ *           default: '30d'
+ *         description: Time period for stats
+ *     responses:
+ *       200:
+ *         description: Agent performance data with team summary
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin or Manager role required
+ */
 router.get('/agent-performance',
   requireRole(ROLES.ADMIN, ROLES.MANAGER),
   async (req, res) => {
@@ -369,6 +534,20 @@ router.get('/agent-performance',
 );
 
 // ── System configuration (Admin only) ────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/monitoring/config:
+ *   get:
+ *     summary: Get current system configuration
+ *     tags: [Monitoring]
+ *     responses:
+ *       200:
+ *         description: Current system configuration
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.get('/config',
   requireRole(ROLES.ADMIN),
   async (req, res) => {
@@ -386,6 +565,48 @@ const configSchema = Joi.object({
   passwordRequireSpecialChars: Joi.boolean(),
 }).min(1);
 
+/**
+ * @swagger
+ * /api/v1/monitoring/config:
+ *   put:
+ *     summary: Update system configuration
+ *     tags: [Monitoring]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               allowRegistration:
+ *                 type: boolean
+ *               logLevel:
+ *                 type: string
+ *                 enum: ['error', 'warn', 'info', 'debug']
+ *               maxLoginAttempts:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 20
+ *               sessionTimeoutMin:
+ *                 type: integer
+ *                 minimum: 5
+ *                 maximum: 480
+ *               passwordMinLength:
+ *                 type: integer
+ *                 minimum: 6
+ *                 maximum: 32
+ *               passwordRequireSpecialChars:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Configuration updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
 router.put('/config',
   requireRole(ROLES.ADMIN),
   async (req, res) => {

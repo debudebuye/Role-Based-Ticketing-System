@@ -10,6 +10,10 @@ version: "3.9"
 #  - NODE_ENV=development (enables Swagger UI, verbose errors)
 
 services:
+  mongo:
+    ports:
+      - "27017:27017"
+
   server:
     build:
       target: deps          # only install deps, don't copy source

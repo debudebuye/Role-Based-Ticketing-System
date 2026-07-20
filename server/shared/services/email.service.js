@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { promises as fs } from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
+import { escapeHtml } from '../utils/string.utils.js';
 
 class EmailService {
   constructor() {
@@ -75,16 +76,6 @@ class EmailService {
       const templatePath = path.join(process.cwd(), 'shared', 'templates', 'email', `${templateName}.html`);
       let template = await fs.readFile(templatePath, 'utf-8');
       
-      // HTML-escape all variable values before substitution to prevent
-      // injecting markup via user-supplied content (e.g. name, ticket title)
-      const escapeHtml = (str) =>
-        String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;');
-
       Object.keys(variables).forEach(key => {
         const regex = new RegExp(`{{${key}}}`, 'g');
         template = template.replace(regex, escapeHtml(variables[key]));
@@ -98,14 +89,6 @@ class EmailService {
   }
 
   getBasicTemplate(variables) {
-    const escapeHtml = (str) =>
-      String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;');
-
     return `
       <!DOCTYPE html>
       <html>

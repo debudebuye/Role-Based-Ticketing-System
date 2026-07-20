@@ -323,7 +323,7 @@ The production stack includes:
 ### Manual
 
 1. Set production environment variables (see `.env.production.example` at project root)
-2. Run `node scripts/check-env.js` to validate configuration
+2. Run `node check-env.js` to validate configuration
 3. Start server with PM2: `pm2 start pm2.config.cjs`
 4. Build client: `cd client && npm run build`
 5. Serve client build through Nginx or your hosting platform

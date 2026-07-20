@@ -7,6 +7,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss';
 import logger from '../utils/logger.js';
 import { validateApiVersion, addVersionInfo } from './version.middleware.js';
+import requestId from './requestId.middleware.js';
 
 // ── XSS sanitize middleware ───────────────────────────────────────────────────
 const sanitizeBody = (req, res, next) => {
@@ -124,6 +125,8 @@ export const setupCustomMiddleware = (app, io) => {
 };
 
 export const setupGlobalMiddleware = (app, io) => {
+  // Request ID — must be first so all downstream middleware/logs include it
+  app.use(requestId);
   setupSecurity(app);
   setupRateLimit(app);
   setupBodyParsing(app);

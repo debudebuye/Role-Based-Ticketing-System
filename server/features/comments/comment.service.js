@@ -7,38 +7,39 @@ import { ROLES } from '../../shared/constants/roles.js';
 export class CommentService {
   static async getTicketComments(ticketId, user, pagination = {}) {
     const { page = 1, limit = 20 } = pagination;
-    
+
+    const safePage  = Math.max(1, parseInt(page)  || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit) || 20));
+
     // Verify user can access the ticket
     const ticket = await TicketService.getTicketById(ticketId, user);
-    
+
     // Build query - filter internal comments based on user role
-    let query = { ticket: ticketId };
-    
+    const query = { ticket: ticketId };
+
     if (user.role === ROLES.CUSTOMER) {
-      query.isInternal = false; // Customers can't see internal comments
+      query.isInternal = false;
     }
-    
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    
-    // Execute queries
+
+    const skip = (safePage - 1) * safeLimit;
+
     const [comments, total] = await Promise.all([
       Comment.find(query)
         .populate('author', 'name email role')
         .populate('editedBy', 'name email')
-        .sort({ createdAt: 1 }) // Oldest first for conversation flow
+        .sort({ createdAt: 1 })
         .skip(skip)
-        .limit(limit),
+        .limit(safeLimit),
       Comment.countDocuments(query)
     ]);
-    
+
     return {
       comments,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: safeLimit,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / safeLimit)
       }
     };
   }
