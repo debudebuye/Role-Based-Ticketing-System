@@ -27,7 +27,9 @@ jobs:
         working-directory: server
 
       - name: Install client dependencies
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
         working-directory: client
 
       - name: Lint server
@@ -75,7 +77,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
         working-directory: client
 
       - name: Run tests
@@ -100,7 +104,9 @@ jobs:
         working-directory: server
 
       - name: Install client dependencies
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
         working-directory: client
 
       - name: Build client
