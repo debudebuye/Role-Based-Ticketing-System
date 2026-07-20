@@ -15,14 +15,16 @@ export class AuthService {
   }
 
   static generateRefreshToken(userId) {
-    return jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_EXPIRE });
+    // Include a random jti so every refresh token is unique even when
+    // generated within the same clock second (JWT iat has 1-second resolution).
+    return jwt.sign({ id: userId, jti: crypto.randomUUID() }, process.env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_EXPIRE });
   }
 
   static async _tokenPair(userId) {
     const accessToken  = this.generateAccessToken(userId);
     const refreshToken = this.generateRefreshToken(userId);
 
-    // Store hash of refresh token for rotation tracking
+    // Store hash of refresh token for rotation tracking.
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     await User.findByIdAndUpdate(userId, { refreshTokenHash }, { validateBeforeSave: false });
 
@@ -48,7 +50,7 @@ export class AuthService {
 
   // ── Login ─────────────────────────────────────────────────────────────────
   static async login(email, password) {
-    const user = await User.findOne({ email }).select('+password +failedLoginAttempts +lockUntil');
+    const user = await User.findOne({ email }).select('+password +failedLoginAttempts +lockUntil +refreshTokenHash');
 
     if (!user) throw new AppError('Invalid email or password', 401);
     if (!user.isActive) throw new AppError('Account is deactivated. Please contact administrator.', 401);
@@ -82,7 +84,11 @@ export class AuthService {
       throw new AppError('Invalid or expired refresh token', 401);
     }
 
-    const user = await User.findById(decoded.id).select('+refreshTokenHash');
+    // Use .lean() to bypass Mongoose identity-map caching so we always
+    // read the latest refreshTokenHash from the database.  Without this,
+    // a cached document from a prior findById() call can serve a stale
+    // hash, causing token-reuse detection to pass incorrectly.
+    const user = await User.findById(decoded.id).select('+refreshTokenHash').lean();
     if (!user || !user.isActive) throw new AppError('User not found or inactive', 401);
 
     // Validate that this is the current refresh token (prevents reuse of superseded tokens)
@@ -103,7 +109,13 @@ export class AuthService {
 
     // Issue a completely new pair (rotation)
     const tokens = await this._tokenPair(user._id);
-    return { user: user.toSafeObject(), ...tokens };
+
+    // Strip internal fields from the lean document (toSafeObject only works on Mongoose documents)
+    const INTERNAL_FIELDS = ['password', 'failedLoginAttempts', 'lockUntil', 'passwordResetToken', 'passwordResetExpiry', 'refreshTokenHash'];
+    const safeUser = { ...user };
+    INTERNAL_FIELDS.forEach((f) => delete safeUser[f]);
+
+    return { user: safeUser, ...tokens };
   }
 
   // ── Forgot password ───────────────────────────────────────────────────────
