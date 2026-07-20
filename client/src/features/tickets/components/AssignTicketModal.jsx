@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, User } from 'lucide-react';
+import { X } from 'lucide-react';
 import { userService } from '../../users/user.service.js';
 import { getInitials } from '../../../shared/utils/helpers.js';
 

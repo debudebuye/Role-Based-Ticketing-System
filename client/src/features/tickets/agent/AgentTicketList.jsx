@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Ticket, Clock, CheckCircle, Play, X } from 'lucide-react';
+import { Search, Ticket, Clock, CheckCircle, Play, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/auth.context.jsx';

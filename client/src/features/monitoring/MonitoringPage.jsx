@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Activity, Server, Users, AlertTriangle, CheckCircle,
-  Clock, Database, Cpu, MemoryStick, RefreshCw,
-  ShieldAlert, FileText, TrendingUp, Wifi, WifiOff,
+  Database, Cpu, MemoryStick, RefreshCw,
+  FileText, TrendingUp, Wifi, WifiOff,
   ChevronDown, ChevronUp, BarChart3, Settings, Save,
   RotateCcw, Loader2, Award
 } from 'lucide-react';
@@ -660,10 +660,10 @@ const AgentsTab = () => {
                       <RateBadge rate={agent.resolutionRate} />
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-600 text-center">
-                      {agent.avgResolutionHours != null ? `${agent.avgResolutionHours}h` : <span className="text-gray-300">—</span>}
+                      {agent.avgResolutionHours !== null ? `${agent.avgResolutionHours}h` : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-600 text-center">
-                      {agent.avgResponseHours != null ? `${agent.avgResponseHours}h` : <span className="text-gray-300">—</span>}
+                      {agent.avgResponseHours !== null ? `${agent.avgResponseHours}h` : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-3 text-sm text-center">
                       {agent.highPriorityHandled > 0
@@ -752,22 +752,26 @@ const ConfigTab = () => {
 
   const set = (key, value) => { setForm(prev => ({ ...prev, [key]: value })); setDirty(true); };
 
-  if (isLoading) return (
-    <div className="card p-12 flex items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-      <span className="ml-2 text-gray-500">Loading system settings…</span>
-    </div>
-  );
-
-  if (isError) return (
-    <div className="card p-6 bg-red-50 border border-red-200 flex items-start space-x-3">
-      <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-medium text-red-800">Failed to load system settings</p>
-        <p className="text-xs text-red-600 mt-1">Check your connection and try again.</p>
+  if (isLoading) {
+    return (
+      <div className="card p-12 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <span className="ml-2 text-gray-500">Loading system settings…</span>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="card p-6 bg-red-50 border border-red-200 flex items-start space-x-3">
+        <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-red-800">Failed to load system settings</p>
+          <p className="text-xs text-red-600 mt-1">Check your connection and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card">

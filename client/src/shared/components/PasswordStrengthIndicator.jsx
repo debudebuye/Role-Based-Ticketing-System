@@ -5,7 +5,7 @@ const PasswordStrengthIndicator = ({ password, showRequirements = true }) => {
 
   const { strength, color, percentage } = getPasswordStrength(password);
   const errors = validatePassword(password);
-  const isValid = errors.length === 0;
+  const _isValid = errors.length === 0;
 
   const getStrengthColor = () => {
     switch (color) {

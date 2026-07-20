@@ -69,7 +69,7 @@ const AgentSettings = ({ user }) => {
 };
 
 // Agent-specific Availability Settings
-const AvailabilitySettings = ({ user }) => {
+const AvailabilitySettings = ({ user: _user }) => {
   const [availability, setAvailability] = useState({
     workingHours: {
       monday: { start: '09:00', end: '17:00', enabled: true },
@@ -231,7 +231,7 @@ const AvailabilitySettings = ({ user }) => {
 };
 
 // Agent-specific Performance Settings
-const PerformanceSettings = ({ user }) => {
+const PerformanceSettings = ({ user: _user }) => {
   const [goals, setGoals] = useState({
     dailyTicketGoal: 8,
     responseTimeGoal: 30, // minutes

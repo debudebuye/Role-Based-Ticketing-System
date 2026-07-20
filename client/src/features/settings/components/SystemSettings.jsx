@@ -38,7 +38,7 @@ const Toggle = ({ checked, onChange, label, description }) => (
   </div>
 );
 
-const SystemSettings = ({ user }) => {
+const SystemSettings = ({ user: _user }) => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(DEFAULTS);
   const [dirty, setDirty] = useState(false);

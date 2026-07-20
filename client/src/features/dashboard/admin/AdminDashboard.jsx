@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Ticket, TrendingUp, Settings, Activity, AlertTriangle, CheckCircle, Server } from 'lucide-react';
+import { Users, Ticket, TrendingUp, Settings, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/auth.context.jsx';
 import { ticketService } from '../../tickets/ticket.service.js';
 import { monitoringService } from '../../monitoring/monitoring.service.js';
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-ticket-stats'],

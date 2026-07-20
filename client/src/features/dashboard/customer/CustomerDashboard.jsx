@@ -40,7 +40,7 @@ const CustomerDashboard = () => {
             Welcome back, {user?.name}!
           </h1>
           <p className="text-gray-600">
-            Here's an overview of your support tickets
+            Here&apos;s an overview of your support tickets
           </p>
         </div>
         <Link

@@ -75,7 +75,7 @@ const AdminSettings = ({ user }) => {
 };
 
 // Admin-specific Security Policies Settings
-const SecurityPoliciesSettings = ({ user }) => {
+const SecurityPoliciesSettings = ({ user: _user }) => {
   const [policies, setPolicies] = useState({
     passwordMinLength: 8,
     passwordRequireSpecialChars: true,
@@ -189,7 +189,7 @@ const SecurityPoliciesSettings = ({ user }) => {
 };
 
 // Admin-specific Database Settings
-const DatabaseSettings = ({ user }) => {
+const DatabaseSettings = ({ user: _user }) => {
   const [dbSettings, setDbSettings] = useState({
     backupFrequency: 'daily',
     retentionPeriod: 30,

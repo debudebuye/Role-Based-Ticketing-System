@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { validatePassword } from '../../../shared/utils/passwordValidation.js';
 import PasswordStrengthIndicator from '../../../shared/components/PasswordStrengthIndicator.jsx';
 
-const SecuritySettings = ({ user }) => {
+const SecuritySettings = ({ user: _user }) => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const newPassword = watch('newPassword');
 

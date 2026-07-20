@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-const NotificationSettings = ({ user }) => {
+const NotificationSettings = ({ user: _user }) => {
   const [settings, setSettings] = useState({
     emailNotifications: true,
     ticketUpdates: true,
