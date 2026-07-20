@@ -103,8 +103,8 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Update last login
@@ -114,7 +114,7 @@ userSchema.methods.updateLastLogin = function() {
 };
 
 // Increment failed login attempts; lock after 5 failures for 15 min
-userSchema.methods.incFailedLogins = async function() {
+userSchema.methods.incFailedLogins = function() {
   const MAX_ATTEMPTS = 5;
   const LOCK_DURATION = 15 * 60 * 1000; // 15 minutes
 
@@ -126,7 +126,7 @@ userSchema.methods.incFailedLogins = async function() {
 };
 
 // Reset failed attempts on successful login
-userSchema.methods.resetFailedLogins = async function() {
+userSchema.methods.resetFailedLogins = function() {
   this.failedLoginAttempts = 0;
   this.lockUntil = null;
   return this.save({ validateBeforeSave: false });

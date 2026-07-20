@@ -1,5 +1,4 @@
 import { Comment } from './comment.model.js';
-import { Ticket } from '../tickets/ticket.model.js';
 import { TicketService } from '../tickets/ticket.service.js';
 import { AppError } from '../../shared/middleware/error.middleware.js';
 import { ROLES } from '../../shared/constants/roles.js';
@@ -11,8 +10,8 @@ export class CommentService {
     const safePage  = Math.max(1, parseInt(page)  || 1);
     const safeLimit = Math.min(100, Math.max(1, parseInt(limit) || 20));
 
-    // Verify user can access the ticket
-    const ticket = await TicketService.getTicketById(ticketId, user);
+    // Verify user can access the ticket (throws 404 if inaccessible)
+    await TicketService.getTicketById(ticketId, user);
 
     // Build query - filter internal comments based on user role
     const query = { ticket: ticketId };
@@ -45,8 +44,8 @@ export class CommentService {
   }
   
   static async createComment(ticketId, commentData, user) {
-    // Verify user can access the ticket
-    const ticket = await TicketService.getTicketById(ticketId, user);
+    // Verify user can access the ticket (throws 404 if inaccessible)
+    await TicketService.getTicketById(ticketId, user);
     
     // Only agents, managers, and admins can create internal comments
     if (commentData.isInternal && user.role === ROLES.CUSTOMER) {

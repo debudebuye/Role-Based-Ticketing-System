@@ -36,7 +36,7 @@ router.get('/version', (req, res) => {
  * Returns 503 when the database is unavailable — load balancers
  * use this to stop routing traffic to unhealthy instances.
  */
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   const dbState = mongoose.connection.readyState;
   // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
   const dbHealthy = dbState === 1;

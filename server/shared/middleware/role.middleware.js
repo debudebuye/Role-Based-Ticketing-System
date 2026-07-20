@@ -47,7 +47,7 @@ export const requireRole = (...roles) => {
 };
 
 export const requireOwnershipOrRole = (resourceField = 'createdBy', ...roles) => {
-  return async (req, res, next) => {
+  return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
