@@ -1,13 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { isTokenExpired, getTokenExpiration, isTokenValid } from './tokenUtils';
 
-function base64Encode(str) {
-  return Buffer.from(str, 'binary').toString('base64');
+function base64UrlEncode(str) {
+  return Buffer.from(str, 'binary')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 function makeToken(payload) {
-  const header = base64Encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = base64Encode(JSON.stringify(payload));
+  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const body = base64UrlEncode(JSON.stringify(payload));
   const sig = 'fakesignature';
   return `${header}.${body}.${sig}`;
 }

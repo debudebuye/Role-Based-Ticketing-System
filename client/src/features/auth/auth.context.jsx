@@ -65,7 +65,18 @@ export const AuthProvider = ({ children }) => {
   const scheduleExpiry = (token) => {
     if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      let base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      let decoded;
+      if (typeof Buffer !== 'undefined') {
+        decoded = Buffer.from(base64, 'base64').toString('utf-8');
+      } else {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        decoded = new TextDecoder().decode(bytes);
+      }
+      const payload = JSON.parse(decoded);
       const msUntilExpiry = payload.exp * 1000 - Date.now();
       if (msUntilExpiry > 0) {
         expiryTimerRef.current = setTimeout(() => {
