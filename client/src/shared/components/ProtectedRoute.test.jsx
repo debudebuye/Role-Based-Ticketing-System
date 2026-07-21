@@ -2,20 +2,18 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-const mockUseAuth = vi.hoisted(() =>
-  vi.fn(() => ({ isAuthenticated: false, user: null, loading: false }))
-);
+let mockUseAuth = () => ({ isAuthenticated: false, user: null, loading: false });
 
 vi.mock('../../features/auth/auth.context.jsx', () => ({
   AuthContext: { Provider: ({ children }) => children },
-  useAuth: mockUseAuth,
+  useAuth: () => mockUseAuth(),
 }));
 
 import ProtectedRoute from './ProtectedRoute';
 
 describe('ProtectedRoute', () => {
   it('shows loading spinner while loading', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null, loading: true });
+    mockUseAuth = () => ({ isAuthenticated: false, user: null, loading: true });
 
     render(
       <MemoryRouter>
@@ -30,7 +28,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('redirects to /login when not authenticated', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null, loading: false });
+    mockUseAuth = () => ({ isAuthenticated: false, user: null, loading: false });
 
     render(
       <MemoryRouter>
@@ -44,7 +42,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children when authenticated with no role restriction', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { role: 'customer' }, loading: false });
+    mockUseAuth = () => ({ isAuthenticated: true, user: { role: 'customer' }, loading: false });
 
     render(
       <MemoryRouter>
@@ -58,7 +56,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children when user has allowed role', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { role: 'admin' }, loading: false });
+    mockUseAuth = () => ({ isAuthenticated: true, user: { role: 'admin' }, loading: false });
 
     render(
       <MemoryRouter>
@@ -72,7 +70,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('shows access denied when user role is not allowed', () => {
-    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { role: 'customer' }, loading: false });
+    mockUseAuth = () => ({ isAuthenticated: true, user: { role: 'customer' }, loading: false });
 
     render(
       <MemoryRouter>
