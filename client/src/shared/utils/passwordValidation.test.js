@@ -61,7 +61,7 @@ describe('getPasswordStrength', () => {
   });
 
   it('returns medium for moderate passwords', () => {
-    const result = getPasswordStrength('abcdef1');
+    const result = getPasswordStrength('Abcdef1');
     expect(result.strength).toBe('medium');
   });
 
