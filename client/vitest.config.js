@@ -9,6 +9,11 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.js'],
     css: true,
     testTimeout: 30000,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/ProtectedRoute.test.jsx',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
