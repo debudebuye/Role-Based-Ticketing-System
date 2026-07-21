@@ -60,7 +60,9 @@ export const debounce = (func, wait) => {
 };
 
 export const generateTicketId = () => {
-  return `TKT-${Date.now().toString(36).toUpperCase()}`;
+  const time = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `TKT-${time}-${rand}`;
 };
 
 export const validateEmail = (email) => {

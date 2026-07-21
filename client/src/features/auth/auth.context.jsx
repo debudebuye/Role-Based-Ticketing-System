@@ -4,7 +4,7 @@ import { isTokenValid } from '../../shared/utils/tokenUtils.js';
 import { tokenStore } from '../../shared/utils/api.js';
 import { socketManager } from '../../shared/utils/socket.js';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 const authReducer = (state, action) => {
   switch (action.type) {
